@@ -1,12 +1,14 @@
 package requests
 
 import (
-    "context"
-    "encoding/json"
-    "net/http"
-    "sci-abo-go/models"
-    "sci-abo-go/db"
-    "sci-abo-go/config"
+	"context"
+	"encoding/json"
+	"net/http"
+	"sci-abo-go/config"
+	"sci-abo-go/db"
+	"sci-abo-go/models"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +17,18 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
     err := json.NewDecoder(r.Body).Decode(&user)
     if err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
+    }
+
+    err = models.ValidateUser(&user)
+    if err != nil {
+        // Handle validation errors
+        errors := err.(validator.ValidationErrors)
+        // Construct error message
+        var errMsg string
+        for _, e := range errors {
+            errMsg += e.Field() + " is " + e.Tag() + "\n"
+        }
+        http.Error(w, errMsg, http.StatusBadRequest)
         return
     }
 
