@@ -1,12 +1,20 @@
 package main
 
-import(
+import (
 	"log"
 	"net/http"
+	"sci-abo-go/config"
+	"sci-abo-go/db"
 	"sci-abo-go/requests"
 )
 
 func main(){
+
+	// load env vars into the 
+	config.LoadEnv()
+
+	// db connection
+	db.InitializeDB()
 
 	// init routes
 	router := requests.InitializerRoutes()

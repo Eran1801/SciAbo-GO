@@ -1,4 +1,4 @@
-package requests
+package requests 
 
 import (
     "github.com/gorilla/mux"
@@ -10,7 +10,7 @@ func InitializerRoutes() *mux.Router{
 	router := mux.NewRouter()
 
 	// define my routes
-	router.HandleFunc("/auth/register", registerHandler).Methods("POST")
+	router.HandleFunc("/auth/register",registerHandler).Methods("POST")
 
 	return router
 }
