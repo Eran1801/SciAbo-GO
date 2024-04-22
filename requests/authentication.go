@@ -1,43 +1,46 @@
 package requests
 
 import (
-    "net/http"   // package http provides HTTP client and server implementations.
-    "sci-abo-go/models"  // importing the 'models' package where the User struct is defined.
-	"encoding/json"        
+    "context"
+    "encoding/json"
+    "net/http"
+    "sci-abo-go/models"
+    "sci-abo-go/db"
+    "sci-abo-go/config"
 )
 
-// RegisterHandler is an HTTP handler function that registers a new user.
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-
-    // declare a variable 'user' of type models.User. This will hold the parsed data.
+    // Decode the JSON data from the request body into the user variable
     var user models.User
-
-    // json.NewDecoder creates a new decoder that reads from r.Body (request body).
-    // The Decode method decodes the JSON-encoded data into the 'user' variable.
     err := json.NewDecoder(r.Body).Decode(&user)
-
-	// if NewDecoder is fails it's returns an error that it's not nil, this is why we check if err != nill
-	if err != nil {
-        // Send an HTTP error message; this is similar to returning an HttpResponseBadRequest in Django.
+    if err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
-	}
+    }
 
-	// Create a response message
-    response := map[string]string{"message": "Welcome " + user.FirstName}
+    // Get database and collection names from environment variables
+    db_name := config.GetEnvVar("DB_NAME")
+    collection := config.GetEnvVar("USER_COLLECTION")
 
-    // Set the content type of the response
-    w.Header().Set("Content-Type", "application/json")
+    // Get the MongoDB collection
+    userCollection := db.GetCollection(db_name, collection)
 
-    // Marshal the response struct to JSON
-    jsonResponse, err := json.Marshal(response)
+    // Insert the user into the MongoDB collection
+    _, err = userCollection.InsertOne(context.Background(), user)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
 
-    // Write the JSON response
+    // Send success response
+    response := map[string]string{"message": "User registered successfully"}
+    w.Header().Set("Content-Type", "application/json")
+
+    jsonResponse, err := json.Marshal(response)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
     w.WriteHeader(http.StatusOK)
     w.Write(jsonResponse)
-
 }

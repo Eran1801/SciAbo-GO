@@ -15,7 +15,7 @@ var Client *mongo.Client
 func InitializeDB() {
 	var err error
 
-	mongoUri := config.GetEnvVar("MONGOURI")
+	var mongoUri string = config.GetEnvVar("MONGO_URI")
 
 	// Construct the MongoDB URI string using fmt.Sprintf
 	clientOptions := options.Client().ApplyURI(mongoUri)
