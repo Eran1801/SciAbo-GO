@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"sci-abo-go/config"
 	"sci-abo-go/models"
 	"sci-abo-go/utils"
     "sci-abo-go/db"
 
-	"github.com/go-playground/validator/v10"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
