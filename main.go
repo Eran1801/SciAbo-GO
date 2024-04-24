@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"sci-abo-go/config"
 	"sci-abo-go/db"
-	"sci-abo-go/requests"
 )
 
 func main(){
@@ -17,7 +16,7 @@ func main(){
 	db.InitializeDB()
 
 	// init routes
-	router := requests.InitializerRoutes()
+	router := initializerRoutes()
 
 	// start the HTTP server using the router
 	log.Println("Server started on port 8080")

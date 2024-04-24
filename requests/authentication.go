@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func registerHandler(w http.ResponseWriter, r *http.Request) {
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     // Decode the JSON data from the request body into the user variable
     var user models.User
     err := json.NewDecoder(r.Body).Decode(&user)
