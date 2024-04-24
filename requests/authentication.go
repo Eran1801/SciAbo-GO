@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"net/http"
 	"sci-abo-go/config"
-	"sci-abo-go/db"
 	"sci-abo-go/models"
+	"sci-abo-go/utils"
+    "sci-abo-go/db"
 
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+
     // Decode the JSON data from the request body into the user variable
     var user models.User
     err := json.NewDecoder(r.Body).Decode(&user)
@@ -19,6 +22,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusBadRequest)
     }
 
+    // handel validation against db requirements
     err = models.ValidateUser(&user)
     if err != nil {
         // Handle validation errors
@@ -32,6 +36,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // hash the user password before saving it in the db
+    utils.HashPassword(w,&user)
+
     // Get database and collection names from environment variables
     db_name := config.GetEnvVar("DB_NAME")
     collection := config.GetEnvVar("USER_COLLECTION")
@@ -41,8 +48,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
     // Insert the user into the MongoDB collection
     _, err = userCollection.InsertOne(context.Background(), user)
+    // checks for errors 
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
+        if mongo.IsDuplicateKeyError(err) {
+            http.Error(w, "Email already exists", http.StatusConflict)
+        } else {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+        }
         return
     }
 
