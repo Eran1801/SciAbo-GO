@@ -1,29 +1,29 @@
 package models
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
-    "github.com/go-playground/validator/v10"
-    "regexp"
+	"regexp"
 
+	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
-    ID                              primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-    FirstName                       string `json:"first_name" validate:"required"` 
-    LastName                        string `json:"last_name" validate:"required"`
-    Email                           string `json:"email" validate:"required,email"`
-    Password                        string `json:"password" validate:"required,passwordPattern"`
-    ConfirmPassword                 string `json:"confirm_password" validate:"required,eqfield=Password" bson:"-"` // bson tell mongo skip this in saving to the db
-    LinkedinProfile                 string `json:"linkedin_profile" validate:"url"`
-    Country                         string `json:"user_country" validate:"required"`
-    AcademicInstitutionOrCompany    string `json:"academic_institution_or_company" validate:"required"`
-    Role                            string `json:"role" validate:"required"`
-    ResearchOverseer                string `json:"research_overseer"`
-    Industry                        string `json:"industry" validate:"required"`
-    About                           string `json:"about" validate:"required"`
-    JoinedEventIDs                  [] string `json:"joined_event_ids"`
-    CreatedEventIDs                 [] string `json:"created_event_ids"`
-
+    ID                              primitive.ObjectID      `json:"id" bson:"_id,omitempty"`
+    FirstName                       string                  `json:"first_name" bson:"first_name" validate:"required"` 
+    LastName                        string                  `json:"last_name" bson:"last_name" validate:"required"`
+    Email                           string                  `json:"email" bson:"email" validate:"required,email"`
+    Password                        string                  `json:"password" bson:"password" validate:"required,passwordPattern"`
+    ConfirmPassword                 string                  `json:"confirm_password" bson:"-"` // bson tells mongo to skip this in saving to the db
+    ProfileImageURL                 string                  `json:"profile_image" bson:"profile_image_url"`  // Ensure this field is included in BSON
+    LinkedinProfile                 string                  `json:"linkedin_profile" bson:"linkedin_profile" validate:"url"`
+    Country                         string                  `json:"user_country" bson:"user_country" validate:"required"`
+    AcademicInstitutionOrCompany    string                  `json:"academic_institution_or_company" bson:"academic_institution_or_company" validate:"required"`
+    Role                            string                  `json:"role" bson:"role" validate:"required"`
+    ResearchOverseer                string                  `json:"research_overseer" bson:"research_overseer"`
+    Industry                        string                  `json:"industry" bson:"industry" validate:"required"`
+    About                           string                  `json:"about" bson:"about" validate:"required"`
+    JoinedEventIDs                  []string               `json:"joined_event_ids" bson:"joined_event_ids"`
+    CreatedEventIDs                 []string               `json:"created_event_ids" bson:"created_event_ids"`
 }
 
 // define a custom validator instance
@@ -58,4 +58,5 @@ func ValidatePassword(f1 validator.FieldLevel) bool {
     // Check all conditions are met
     return hasLower && hasUpper && hasDigit && hasSymbol && hasMinLength
 }
+
 

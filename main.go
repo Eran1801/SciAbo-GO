@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"sci-abo-go/config"
-	"sci-abo-go/db"
+	"sci-abo-go/storage"
 )
 
 func main(){
@@ -13,7 +13,7 @@ func main(){
 	config.LoadEnv()
 
 	// db connection
-	db.InitializeDB()
+	storage.InitializeDB()
 
 	// init routes
 	router := initializerRoutes()

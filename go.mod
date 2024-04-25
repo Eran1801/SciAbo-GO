@@ -9,6 +9,11 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go v1.51.28 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+)
+
+require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-passwd/validator v0.0.0-20180902184246-0b4c967e436b // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
