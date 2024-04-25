@@ -1,21 +1,21 @@
-package main 
+package main
 
 import (
-    "github.com/gorilla/mux"
 	"sci-abo-go/requests"
+
+	"github.com/gorilla/mux"
 )
 
-func initializerRoutes() *mux.Router{
+func initializerRoutes() *mux.Router {
 
 	// creating a new instance of the router
 	router := mux.NewRouter()
 
 	// auth
-	router.HandleFunc("/auth/register",requests.RegisterHandler).Methods("POST")
+	router.HandleFunc("/auth/register", requests.CreatingUser).Methods("POST")
 
 	// profile
-	router.HandleFunc("/profile/upload_profile_image",requests.UploadProfilePictureHandler).Methods("POST")
-	
+	router.HandleFunc("/profile/upload_profile_image", requests.UploadUserProfilePicture).Methods("POST")
 
 	return router
 }
