@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"sci-abo-go/config"
 	"sci-abo-go/models"
 	"sci-abo-go/utils"
     "sci-abo-go/db"
@@ -42,18 +41,19 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     utils.HashPassword(w,&user)
 
     // Get database and collection names from environment variables
-    db_name := config.GetEnvVar("DB_NAME")
-    collection := config.GetEnvVar("USER_COLLECTION")
+    db_name, collection_name := utils.ExtractDBAndCollectionNames()
 
     // Get the MongoDB collection
-    userCollection := db.GetCollection(db_name, collection)
+    userCollection := db.GetCollection(db_name, collection_name)
 
     // Insert the user into the MongoDB collection
     _, err = userCollection.InsertOne(context.Background(), user)
     // checks for errors 
     if err != nil {
+        // checks if the email is already exist in the db
         if mongo.IsDuplicateKeyError(err) {
             http.Error(w, "Email already exists", http.StatusConflict)
+        // other errors
         } else {
             http.Error(w, err.Error(), http.StatusInternalServerError)
         }
