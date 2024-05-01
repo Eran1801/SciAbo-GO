@@ -6,13 +6,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func initializerRoutes() *mux.Router {
+func InitializerRoutes() *mux.Router {
 
 	// creating a new instance of the router
 	router := mux.NewRouter()
 
 	// auth
-	router.HandleFunc("/auth/register", requests.CreatingUser).Methods("POST")
+	router.HandleFunc("/auth/register", requests.CreateUser).Methods("POST")
 
 	// profile
 	router.HandleFunc("/profile/upload_profile_image", requests.UploadUserProfilePicture).Methods("POST")

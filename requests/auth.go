@@ -14,7 +14,7 @@ import (
 	"sci-abo-go/utils"
 )
 
-func CreatingUser(w http.ResponseWriter, r *http.Request) {
+func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Decode the JSON data from the request body into the user variable
 	var user models.User

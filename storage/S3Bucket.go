@@ -29,6 +29,7 @@ func UploadFileToS3(file multipart.File, file_name string, user_id string) (stri
 
     uploader := s3manager.NewUploader(sess)
 
+    // todo: fix it to be more generic how I control the path
     file_path := "Users/profileImage/" + user_id + "/" + file_name
 
     // Upload input parameters

@@ -16,7 +16,7 @@ func main(){
 	storage.InitializeDB()
 
 	// init routes
-	router := initializerRoutes()
+	router := InitializerRoutes()
 
 	// start the HTTP server using the router
 	log.Println("Server started on port 8080")

@@ -9,12 +9,15 @@ import (
 
 func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 
-	id := ""
+	id := "66321220f4d099e0b3d466c"
 	user, err := storage.GetUserById(id)
+
 	if err != nil {
-		http.Error(w, "Error fetching user", http.StatusBadRequest)
+		http.Error(w, "Error fetching user from db", http.StatusBadRequest)
+		return
 	} else if user == nil {
 		http.Error(w, "No user found with this email:", http.StatusBadRequest)
+		return
 	}
 
 	// Parse the multipart form data with a max size of 10 MB
@@ -34,9 +37,9 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Upload file to S3 and get the URL
-	image_url, err := storage.UploadFileToS3(file, header.Filename, user.ID.String())
+	image_url, err := storage.UploadFileToS3(file, header.Filename, id)
 	if err != nil {
-		http.Error(w, "Failed to upload file: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to upload file: " + err.Error(), http.StatusInternalServerError)
 		log.Println("Error uploading file to S3: ", err)
 		return
 	}
@@ -47,7 +50,8 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	}
 	err = storage.UpdateUser(id, updates)
 	if err != nil {
-		log.Println("Error updating user:", err)
+		http.Error(w, "Error updating user:: " + err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// log the successful upload and respond to the client

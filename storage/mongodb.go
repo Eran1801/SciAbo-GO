@@ -5,6 +5,7 @@ import (
 	"log"
 	"sci-abo-go/config"
 	"sci-abo-go/models"
+	"sci-abo-go/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -49,6 +50,8 @@ func CreatingIndexesByUserEmail(client *mongo.Client) {
 	if err != nil {
 		log.Fatalf("Failed to create index: %v", err)
 	}
+
+	log.Println("Creating indexes by user email in mongodb was ended successfully")
 }
 
 // GetCollection returns a reference to a collection in the database
@@ -62,9 +65,12 @@ func GetUserById(id string) (*models.User, error) {
 	var user models.User
 
 	collection := GetCollection(config.GetEnvVar("USER_COLLECTION"))
-	filter := bson.M{"id": id}
 
-	err := collection.FindOne(context.TODO(), filter).Decode(&user)
+	obj_id := utils.GetObjectIdByStringId(id) // convert the string id to an objectId for mongo extractions
+	filter := bson.M{"_id": obj_id} // set the filter to retrieve data from the db
+
+	err := collection.FindOne(context.TODO(), filter).Decode(&user) // check in the db and decode to the user variable
+	log.Println("User : ", user)
 	if err != nil {
 		if err == mongo.ErrNilDocument {
 			return nil, nil // no docs was found
@@ -77,7 +83,7 @@ func GetUserById(id string) (*models.User, error) {
 
 func UpdateUser(id string, updates map[string]interface{}) error {
 	collection := GetCollection(config.GetEnvVar("USER_COLLECTION"))
-	filter := bson.M{"id": id}
+	filter := bson.M{"_id": utils.GetObjectIdByStringId(id)}
 	update := bson.M{"$set": updates}
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
