@@ -13,8 +13,8 @@ type User struct {
     LastName                        string                  `json:"last_name" bson:"last_name" validate:"required"`
     Email                           string                  `json:"email" bson:"email" validate:"required,email"`
     Password                        string                  `json:"password" bson:"password" validate:"required,passwordPattern"`
-    ConfirmPassword                 string                  `json:"confirm_password" bson:"-"` // bson tells mongo to skip this in saving to the db
-    ProfileImageURL                 string                  `json:"profile_image" bson:"profile_image_url"`  // Ensure this field is included in BSON
+    ConfirmPassword                 string                  `json:"confirm_password" bson:"-"` // bson "-" tells mongo to skip this in saving to the db
+    ProfileImageURL                 string                  `json:"profile_image" bson:"profile_image_url"`
     LinkedinProfile                 string                  `json:"linkedin_profile" bson:"linkedin_profile" validate:"url"`
     Country                         string                  `json:"user_country" bson:"user_country" validate:"required"`
     AcademicInstitutionOrCompany    string                  `json:"academic_institution_or_company" bson:"academic_institution_or_company" validate:"required"`
@@ -48,12 +48,15 @@ func ValidateUser(user *User) error {
 
 func ValidatePassword(f1 validator.FieldLevel) bool {
     password := f1.Field().String()
+    
     // Compile separate regex for each requirement
-    hasLower := regexp.MustCompile(`[a-z]`).MatchString(password)
-    hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
-    hasDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
-    hasSymbol := regexp.MustCompile(`[!@#$%^&*()]`).MatchString(password)
-    hasMinLength := len(password) >= 8
+    var (
+        hasLower     = regexp.MustCompile(`[a-z]`).MatchString(password)
+        hasUpper     = regexp.MustCompile(`[A-Z]`).MatchString(password)
+        hasDigit     = regexp.MustCompile(`[0-9]`).MatchString(password)
+        hasSymbol    = regexp.MustCompile(`[!@#$%^&*()]`).MatchString(password)
+        hasMinLength = len(password) >= 8
+    )
 
     // Check all conditions are met
     return hasLower && hasUpper && hasDigit && hasSymbol && hasMinLength

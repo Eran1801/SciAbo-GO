@@ -34,11 +34,12 @@ func InitializeDB() {
 	CreatingIndexesByUserEmail(client)
 }
 
+
 func CreatingIndexesByUserEmail(client *mongo.Client) {
 	if client == nil {
 		log.Fatal("MongoDB client is not initialized")
 	}
-	collection := GetCollection(config.GetEnvVar("USER_COLLECTION"))
+	collection := GetUserCollection()
 
 	indexModel := mongo.IndexModel{
 		Keys:    bson.D{{Key: "email", Value: 1}}, // index in ascending order
@@ -54,17 +55,19 @@ func CreatingIndexesByUserEmail(client *mongo.Client) {
 	log.Println("Creating indexes by user email in mongodb was ended successfully")
 }
 
-// GetCollection returns a reference to a collection in the database
-func GetCollection(collection string) *mongo.Collection {
+
+func GetUserCollection() *mongo.Collection {
+	user_collection_name := config.GetEnvVar("USER_COLLECTION")
 	database := config.GetEnvVar("DB_NAME")
-	return client.Database(database).Collection(collection)
+	return client.Database(database).Collection(user_collection_name)
 }
+
 
 func GetUserById(id string) (*models.User, error) {
 
 	var user models.User
 
-	collection := GetCollection(config.GetEnvVar("USER_COLLECTION"))
+	collection := GetUserCollection()
 
 	obj_id := utils.GetObjectIdByStringId(id) // convert the string id to an objectId for mongo extractions
 	filter := bson.M{"_id": obj_id} // set the filter to retrieve data from the db
@@ -81,8 +84,9 @@ func GetUserById(id string) (*models.User, error) {
 	return &user, nil
 }
 
+
 func UpdateUser(id string, updates map[string]interface{}) error {
-	collection := GetCollection(config.GetEnvVar("USER_COLLECTION"))
+	collection := GetUserCollection()
 	filter := bson.M{"_id": utils.GetObjectIdByStringId(id)}
 	update := bson.M{"$set": updates}
 
