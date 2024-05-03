@@ -2,8 +2,10 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"sci-abo-go/config"
+	"net/http"
+	"os"
 	"sci-abo-go/models"
 	"sci-abo-go/utils"
 
@@ -17,7 +19,7 @@ var client *mongo.Client
 // initialize connects to MongoDB
 func InitializeDB() {
 
-	mongoUri := config.GetEnvVar("MONGO_URI")
+	mongoUri := os.Getenv("MONGO_URI")
 
 	// Construct the MongoDB URI string using fmt.Sprintf
 	clientOptions := options.Client().ApplyURI(mongoUri)
@@ -33,7 +35,6 @@ func InitializeDB() {
 	// call the unique email index creation
 	CreatingIndexesByUserEmail(client)
 }
-
 
 func CreatingIndexesByUserEmail(client *mongo.Client) {
 	if client == nil {
@@ -55,13 +56,11 @@ func CreatingIndexesByUserEmail(client *mongo.Client) {
 	log.Println("Creating indexes by user email in mongodb was ended successfully")
 }
 
-
 func GetUserCollection() *mongo.Collection {
-	user_collection_name := config.GetEnvVar("USER_COLLECTION")
-	database := config.GetEnvVar("DB_NAME")
+	user_collection_name := os.Getenv("USER_COLLECTION")
+	database := os.Getenv("DB_NAME")
 	return client.Database(database).Collection(user_collection_name)
 }
-
 
 func GetUserById(id string) (*models.User, error) {
 
@@ -84,7 +83,6 @@ func GetUserById(id string) (*models.User, error) {
 	return &user, nil
 }
 
-
 func UpdateUser(id string, updates map[string]interface{}) error {
 	collection := GetUserCollection()
 	filter := bson.M{"_id": utils.GetObjectIdByStringId(id)}
@@ -93,6 +91,25 @@ func UpdateUser(id string, updates map[string]interface{}) error {
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func SaveUserInDB(user *models.User, w http.ResponseWriter) error {
+
+	// Get the User collection
+	user_collection := GetUserCollection()
+
+	// Insert the user into the MongoDB collection
+	_, err := user_collection.InsertOne(context.Background(), user)
+	// checks for errors
+	if err != nil {
+		// checks if the email is already exist in the db
+		if mongo.IsDuplicateKeyError(err) {
+			return fmt.Errorf("email already exists")
+		} else { // other errors
+			return fmt.Errorf(err.Error())
+		}
 	}
 	return nil
 }

@@ -13,24 +13,24 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	user, err := storage.GetUserById(id)
 
 	if err != nil {
-		http.Error(w, "Error fetching user from db", http.StatusBadRequest)
+		ErrorResponse("Error fetching user from db", w)
 		return
+
 	} else if user == nil {
-		http.Error(w, "No user found with this email:", http.StatusBadRequest)
+		ErrorResponse("No user found with this id", w)
 		return
 	}
 
 	// Parse the multipart form data with a max size of 10 MB
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "File too large or incorrect data.", http.StatusBadRequest)
-		log.Println("Error parsing form data: ", err)
+		ErrorResponse("File too large or incorrect data", w)
 		return
 	}
 
 	// Extract file from the parsed form
 	file, header, err := r.FormFile("profile_image")
 	if err != nil {
-		http.Error(w, "Invalid file upload.", http.StatusBadRequest)
+		ErrorResponse("No user found with this id", w)
 		log.Println("Error retrieving file from form: ", err)
 		return
 	}

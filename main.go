@@ -3,14 +3,17 @@ package main
 import (
 	"log"
 	"net/http"
-	"sci-abo-go/config"
 	"sci-abo-go/storage"
+	"github.com/joho/godotenv"
+
 )
 
 func main(){
 
-	// load env vars into the 
-	config.LoadEnv()
+	// load env file
+	if err := godotenv.Load(); err != nil {
+        log.Fatal("Error loading .env file")
+    }
 
 	// db connection
 	storage.InitializeDB()

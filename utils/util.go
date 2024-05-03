@@ -1,15 +1,14 @@
 package utils
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sci-abo-go/models"
 
+	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/go-playground/validator/v10"
-
 )
 
 
@@ -17,6 +16,7 @@ func HashPassword(w http.ResponseWriter, user *models.User) {
 
 	hash_password, err := bcrypt.GenerateFromPassword([]byte(user.Password),bcrypt.DefaultCost)
 	if err != nil{
+
 		http.Error(w,"Field to hash password", http.StatusInternalServerError)
 		return
 	}
@@ -35,63 +35,20 @@ func GetObjectIdByStringId(id string) primitive.ObjectID {
 	return obj_id
 }
 
-func SuccessResponse(message string,data *string, w http.ResponseWriter) {
+func ValidateDbRequirements(user *models.User, w http.ResponseWriter) error {
+    err := models.ValidateUser(user)
+    if err != nil {
+        // Handle validation errors
+        errors := err.(validator.ValidationErrors)
+        // Construct error message
+        var errMsg string
+        for _, e := range errors {
+            errMsg += e.Field() + " is " + e.Tag() + "; "
+			if len(errMsg) > 0 {
+				return fmt.Errorf(errMsg)
+			}
+        }
 
-	response := make(map[string]string)
-	response["message"] = message
-
-	if data != nil {
-		response["data"] = *data
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
-
-}
-
-func ErrorResponse(message string, data *string, w http.ResponseWriter) {
-
-	response := make(map[string]string)
-	response["message"] = message
-
-	if data != nil {
-		response["data"] = *data
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	json_response, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write(json_response)
-
-}
-
-func ValidateDbRequirements(user *models.User, w http.ResponseWriter) {
-
-	err := models.ValidateUser(user)
-	if err != nil {
-		// Handle validation errors
-		errors := err.(validator.ValidationErrors)
-		// Construct error message
-		var errMsg string
-		for _, e := range errors {
-			errMsg += e.Field() + " is " + e.Tag() + "\n"
-		}
-		ErrorResponse(errMsg, nil, w)
-		return
-	}
-
+    }
+    return nil
 }
