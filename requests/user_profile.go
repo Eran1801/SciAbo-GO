@@ -8,16 +8,16 @@ import (
 )
 
 func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
-
-	id := "66321220f4d099e0b3d466c"
-	user, err := storage.GetUserById(id)
+	
+	email := "66321220f4d099e0b3d466c" // needs to extract from the request
+	user, err := storage.GetUserByEmail(email)
 
 	if err != nil {
 		ErrorResponse("Error fetching user from db", w)
 		return
 
 	} else if user == nil {
-		ErrorResponse("No user found with this id", w)
+		ErrorResponse("No user found with this email", w)
 		return
 	}
 
@@ -37,9 +37,9 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	// Upload file to S3 and get the URL
-	image_url, err := storage.UploadFileToS3(file, header.Filename, id)
+	image_url, err := storage.UploadFileToS3(file, header.Filename, email)
 	if err != nil {
-		http.Error(w, "Failed to upload file: " + err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to upload file: "+err.Error(), http.StatusInternalServerError)
 		log.Println("Error uploading file to S3: ", err)
 		return
 	}
@@ -48,9 +48,9 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	updates := map[string]interface{}{
 		"profile_image_url": image_url,
 	}
-	err = storage.UpdateUser(id, updates)
+	err = storage.UpdateUser(email, updates)
 	if err != nil {
-		http.Error(w, "Error updating user:: " + err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error updating user:: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

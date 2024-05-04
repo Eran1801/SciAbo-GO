@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"sci-abo-go/models"
-	"sci-abo-go/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,13 +18,13 @@ var client *mongo.Client
 // initialize connects to MongoDB
 func InitializeDB() {
 
-	mongoUri := os.Getenv("MONGO_URI")
+	mongo_uri := os.Getenv("MONGO_URI")
 
-	// Construct the MongoDB URI string using fmt.Sprintf
-	clientOptions := options.Client().ApplyURI(mongoUri)
+	// construct the MongoDB URI
+	client_options := options.Client().ApplyURI(mongo_uri)
 
 	var err error
-	client, err = mongo.Connect(context.TODO(), clientOptions)
+	client, err = mongo.Connect(context.TODO(), client_options)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,27 +32,32 @@ func InitializeDB() {
 	log.Println("Connected to MongoDB!")
 
 	// call the unique email index creation
-	CreatingIndexesByUserEmail(client)
+	err = CreatingIndexesDB(client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
-func CreatingIndexesByUserEmail(client *mongo.Client) {
+func CreatingIndexesDB(client *mongo.Client) error {
 	if client == nil {
-		log.Fatal("MongoDB client is not initialized")
+		return fmt.Errorf("mongoDB client is not initialized")
 	}
 	collection := GetUserCollection()
 
-	indexModel := mongo.IndexModel{
+	index_model := mongo.IndexModel{
 		Keys:    bson.D{{Key: "email", Value: 1}}, // index in ascending order
 		Options: options.Index().SetUnique(true),  // set the unique constraint
 	}
 
 	// create the index
-	_, err := collection.Indexes().CreateOne(context.Background(), indexModel)
+	_, err := collection.Indexes().CreateOne(context.Background(), index_model)
 	if err != nil {
-		log.Fatalf("Failed to create index: %v", err)
+		return fmt.Errorf("failed to create index")
 	}
 
-	log.Println("Creating indexes by user email in mongodb was ended successfully")
+	log.Println("Creating indexes in mongodb was ended successfully")
+	return nil
 }
 
 func GetUserCollection() *mongo.Collection {
@@ -62,17 +66,15 @@ func GetUserCollection() *mongo.Collection {
 	return client.Database(database).Collection(user_collection_name)
 }
 
-func GetUserById(id string) (*models.User, error) {
+func GetUserByEmail(email string) (*models.User, error) {
 
 	var user models.User
 
 	collection := GetUserCollection()
 
-	obj_id := utils.GetObjectIdByStringId(id) // convert the string id to an objectId for mongo extractions
-	filter := bson.M{"_id": obj_id} // set the filter to retrieve data from the db
+	filter := bson.M{"email": email} // set the filter to retrieve data from the db
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&user) // check in the db and decode to the user variable
-	log.Println("User : ", user)
 	if err != nil {
 		if err == mongo.ErrNilDocument {
 			return nil, nil // no docs was found
@@ -83,10 +85,12 @@ func GetUserById(id string) (*models.User, error) {
 	return &user, nil
 }
 
-func UpdateUser(id string, updates map[string]interface{}) error {
+func UpdateUser(email string, updates map[string]interface{}) error {
+
 	collection := GetUserCollection()
-	filter := bson.M{"_id": utils.GetObjectIdByStringId(id)}
-	update := bson.M{"$set": updates}
+
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": updates} // updates it's a map with the fields to update
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {

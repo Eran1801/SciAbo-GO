@@ -2,12 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"sci-abo-go/models"
 
 	"github.com/go-playground/validator/v10"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,18 +19,6 @@ func HashPassword(w http.ResponseWriter, user *models.User) {
 		return
 	}
 	user.Password = string(hash_password)
-}
-
-
-func GetObjectIdByStringId(id string) primitive.ObjectID {
-
-	obj_id, err := primitive.ObjectIDFromHex(id) // id in the db is ObjectId and not string, needs to convert it.
-	if err != nil {
-		log.Println("Error converting string to ObjectId: ", err)
-		return primitive.ObjectID{}
-	}
-
-	return obj_id
 }
 
 func ValidateDbRequirements(user *models.User, w http.ResponseWriter) error {

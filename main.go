@@ -15,7 +15,7 @@ func main(){
         log.Fatal("Error loading .env file")
     }
 
-	// db connection
+	// db connection and creating indexes
 	storage.InitializeDB()
 
 	// init routes
