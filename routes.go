@@ -14,6 +14,9 @@ func InitializerRoutes() *mux.Router {
 	// auth
 	router.HandleFunc("/auth/register", requests.CreateUser).Methods("POST")
 
+	// login
+	
+
 	// profile
 	router.HandleFunc("/profile/upload_profile_image", requests.UploadUserProfilePicture).Methods("POST")
 

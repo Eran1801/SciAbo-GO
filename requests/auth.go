@@ -15,7 +15,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		ErrorResponse("Error in Decode the user request", w)
+		ErrorResponse(err.Error(), w)
 		return
 	}
 
@@ -27,10 +27,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// hash the user password before saving it in the db
-	utils.HashPassword(w, &user)
+	err = utils.EncryptPassword(&user)
+	if err != nil{
+		ErrorResponse(err.Error(),w)
+		return
+	}
 
 	// save the user in the db
-	err = storage.SaveUserInDB(&user, w)
+	err = storage.SaveUserInDB(&user)
 	if err != nil {
 		ErrorResponse(err.Error(), w)
 		return

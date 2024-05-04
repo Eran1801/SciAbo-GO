@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"sci-abo-go/models"
 
@@ -99,7 +98,7 @@ func UpdateUser(email string, updates map[string]interface{}) error {
 	return nil
 }
 
-func SaveUserInDB(user *models.User, w http.ResponseWriter) error {
+func SaveUserInDB(user *models.User) error {
 
 	// Get the User collection
 	user_collection := GetUserCollection()

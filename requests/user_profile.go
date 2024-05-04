@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"sci-abo-go/storage"
@@ -9,7 +8,7 @@ import (
 
 func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	
-	email := "66321220f4d099e0b3d466c" // needs to extract from the request
+	email := r.FormValue("email")// needs to extract from the request
 	user, err := storage.GetUserByEmail(email)
 
 	if err != nil {
@@ -21,13 +20,13 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the multipart form data with a max size of 10 MB
+	// parse the multipart form data with a max size of 10 MB
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		ErrorResponse("File too large or incorrect data", w)
 		return
 	}
 
-	// Extract file from the parsed form
+	// extract file from the parsed form
 	file, header, err := r.FormFile("profile_image")
 	if err != nil {
 		ErrorResponse("No user found with this id", w)
@@ -35,11 +34,12 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+	
 
 	// Upload file to S3 and get the URL
 	image_url, err := storage.UploadFileToS3(file, header.Filename, email)
 	if err != nil {
-		http.Error(w, "Failed to upload file: "+err.Error(), http.StatusInternalServerError)
+		ErrorResponse("Failed to upload file: ",w)
 		log.Println("Error uploading file to S3: ", err)
 		return
 	}
@@ -50,14 +50,9 @@ func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
 	}
 	err = storage.UpdateUser(email, updates)
 	if err != nil {
-		http.Error(w, "Error updating user:: "+err.Error(), http.StatusInternalServerError)
+		ErrorResponse("Error updating user ",w)
 		return
 	}
 
-	// log the successful upload and respond to the client
-	log.Println("Profile image uploaded successfully: ", image_url)
-	w.Header().Set("Content-Type", "application/json")
-	response := map[string]string{"message": "Profile image uploaded successfully"}
-	json.NewEncoder(w).Encode(response)
-
+	SuccessResponse("Profile image uploaded/updated successfully", nil, w)
 }
