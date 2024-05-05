@@ -1,45 +1,36 @@
 package requests
 
 import (
-	"encoding/json"
-	"net/http"
 
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
 	"sci-abo-go/utils"
+
+	"github.com/gin-gonic/gin"
+
 )
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func CreateUser(c *gin.Context) {
+    var user models.User
+    if err := c.ShouldBindJSON(&user); err != nil {
+        ErrorResponse(c, err.Error())
+        return
+    }
 
-	// Decode the JSON data from the request body into the user variable
-	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		ErrorResponse(err.Error(), w)
-		return
-	}
+    if err := utils.ValidateDbRequirements(&user); err != nil {
+        ErrorResponse(c, err.Error())
+        return
+    }
 
-	// Handle validation against db requirements
-	err = utils.ValidateDbRequirements(&user, w)
-	if err != nil {
-		ErrorResponse(err.Error(), w)
-		return
-	}
+    if err := utils.EncryptPassword(&user); err != nil {
+        ErrorResponse(c, err.Error())
+        return
+    }
 
-	// hash the user password before saving it in the db
-	err = utils.EncryptPassword(&user)
-	if err != nil{
-		ErrorResponse(err.Error(),w)
-		return
-	}
+    if err := storage.SaveUserInDB(&user); err != nil {
+        ErrorResponse(c, err.Error())
+        return
+    }
 
-	// save the user in the db
-	err = storage.SaveUserInDB(&user)
-	if err != nil {
-		ErrorResponse(err.Error(), w)
-		return
-	}
-
-	// Send success response
-	SuccessResponse("User created successfully", string(user.Email), w)
+    SuccessResponse(c, "User created successfully", user.Email)
 }

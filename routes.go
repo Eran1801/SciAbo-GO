@@ -1,24 +1,21 @@
 package main
 
 import (
-	"sci-abo-go/requests"
-
-	"github.com/gorilla/mux"
+    "sci-abo-go/requests"
+    "github.com/gin-gonic/gin"
 )
 
-func InitializerRoutes() *mux.Router {
+func InitializerRoutes() *gin.Engine {
+    // Create a Gin router with default middleware (logger and recovery)
+    router := gin.Default()
 
-	// creating a new instance of the router
-	router := mux.NewRouter()
+    // Auth routes
+    router.POST("/auth/register", requests.CreateUser)
 
-	// auth
-	router.HandleFunc("/auth/register", requests.CreateUser).Methods("POST")
+    // Profile routes
+    router.POST("/profile/upload_profile_image", requests.UploadUserProfilePicture)
 
-	// login
-	
+    // Initialize other routes here as needed
 
-	// profile
-	router.HandleFunc("/profile/upload_profile_image", requests.UploadUserProfilePicture).Methods("POST")
-
-	return router
+    return router
 }

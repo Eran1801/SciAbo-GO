@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"net/http"
 	"sci-abo-go/models"
 
 	"github.com/go-playground/validator/v10"
@@ -19,7 +18,7 @@ func EncryptPassword(user *models.User) error {
 	return nil
 }
 
-func ValidateDbRequirements(user *models.User, w http.ResponseWriter) error {
+func ValidateDbRequirements(user *models.User) error {
 	err := models.ValidateUser(user)
 	if err != nil {
 		// Handle validation errors

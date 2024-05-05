@@ -4,55 +4,58 @@ import (
 	"log"
 	"net/http"
 	"sci-abo-go/storage"
+
+	"github.com/gin-gonic/gin"
 )
 
-func UploadUserProfilePicture(w http.ResponseWriter, r *http.Request) {
-	
-	email := r.FormValue("email")// needs to extract from the request
-	user, err := storage.GetUserByEmail(email)
+func UploadUserProfilePicture(c *gin.Context) {
+    email := c.PostForm("email") // Extract email from the form data
+    user, err := storage.GetUserByEmail(email)
 
-	if err != nil {
-		ErrorResponse("Error fetching user from db", w)
-		return
+    if err != nil {
+        ErrorResponse(c, "Error fetching user from db")
+        return
+    } else if user == nil {
+        ErrorResponse(c, "No user found with this email")
+        return
+    }
 
-	} else if user == nil {
-		ErrorResponse("No user found with this email", w)
-		return
-	}
+    // Limit the size of the form to 10 MB
+    c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10<<20)
 
-	// parse the multipart form data with a max size of 10 MB
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		ErrorResponse("File too large or incorrect data", w)
-		return
-	}
+    // Parse the multipart form
+    if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+        ErrorResponse(c, "File too large or incorrect data")
+        return
+    }
 
-	// extract file from the parsed form
-	file, header, err := r.FormFile("profile_image")
-	if err != nil {
-		ErrorResponse("No user found with this id", w)
-		log.Println("Error retrieving file from form: ", err)
-		return
-	}
-	defer file.Close()
-	
+    // Retrieve the file from the form
+    file, header, err := c.Request.FormFile("profile_image")
+    if err != nil {
+        ErrorResponse(c, "Error retrieving file from form")
+        log.Println("Error retrieving file from form: ", err)
+        return
+    }
+    defer file.Close()
 
-	// Upload file to S3 and get the URL
-	image_url, err := storage.UploadFileToS3(file, header.Filename, email)
-	if err != nil {
-		ErrorResponse("Failed to upload file: ",w)
-		log.Println("Error uploading file to S3: ", err)
-		return
-	}
+    // Upload file to S3 and get the URL
+    file_path := "Users/" + email + "/profile picture" + header.Filename
+    image_url, err := storage.UploadFileToS3(file, email, file_path)
+    if err != nil {
+        ErrorResponse(c, "Failed to upload file")
+        log.Println("Error uploading file to S3: ", err)
+        return
+    }
 
-	// update the user db and add the profile url image
-	updates := map[string]interface{}{
-		"profile_image_url": image_url,
-	}
-	err = storage.UpdateUser(email, updates)
-	if err != nil {
-		ErrorResponse("Error updating user ",w)
-		return
-	}
+    // Update the user in the database with the new profile image URL
+    updates := map[string]interface{}{
+        "profile_image_url": image_url,
+    }
+    if err := storage.UpdateUser(email, updates); err != nil {
+        ErrorResponse(c, "Error updating user")
+        return
+    }
 
-	SuccessResponse("Profile image uploaded/updated successfully", nil, w)
+    SuccessResponse(c, "Profile image upload successfully", nil)
 }
+

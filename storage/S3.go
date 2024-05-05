@@ -12,7 +12,7 @@ import (
 )
 
 
-func UploadFileToS3(file multipart.File, file_name string, email string) (string, error) {
+func UploadFileToS3(file multipart.File, email string, path string) (string, error) {
 
 	s3_region := os.Getenv("AWS_S3_REGION")
 	aws_access_key := os.Getenv("AWS_ACCESS_KEY_ID")
@@ -29,12 +29,10 @@ func UploadFileToS3(file multipart.File, file_name string, email string) (string
 
     uploader := s3manager.NewUploader(sess)
 
-    file_path := "Users/" + email + "/profile picture" + file_name
-
     // Upload input parameters
     prams := &s3manager.UploadInput{
         Bucket: aws.String(s3_bucket),
-        Key:    aws.String(file_path),
+        Key:    aws.String(path),
         Body:   file,
     }
 
