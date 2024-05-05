@@ -98,7 +98,7 @@ func UpdateUser(email string, updates map[string]interface{}) error {
 	return nil
 }
 
-func SaveUserInDB(user *models.User) error {
+func SaveUserInDatabase(user *models.User) error {
 
 	// Get the User collection
 	user_collection := GetUserCollection()
