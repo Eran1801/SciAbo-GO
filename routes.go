@@ -11,11 +11,11 @@ func InitializerRoutes() *gin.Engine {
 
     // Auth routes
     router.POST("/auth/register", requests.CreateUser)
+    router.POST("/auth/login", requests.Login)
+    router.POST("/auth/validate", requests.Validate)
 
     // Profile routes
     router.POST("/profile/upload_profile_image", requests.UploadUserProfilePicture)
-
-    // Initialize other routes here as needed
 
     return router
 }
