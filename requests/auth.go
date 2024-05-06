@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"sci-abo-go/models"
