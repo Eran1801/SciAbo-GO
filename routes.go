@@ -1,8 +1,10 @@
 package main
 
 import (
-    "sci-abo-go/requests"
-    "github.com/gin-gonic/gin"
+	"sci-abo-go/middleware"
+	"sci-abo-go/requests"
+
+	"github.com/gin-gonic/gin"
 )
 
 func InitializerRoutes() *gin.Engine {
@@ -12,10 +14,10 @@ func InitializerRoutes() *gin.Engine {
     // Auth routes
     router.POST("/auth/register", requests.CreateUser)
     router.POST("/auth/login", requests.Login)
-    router.POST("/auth/validate", requests.Validate)
+    router.GET("/get_all_events", middleware.RequiredAuth, requests.GetAllEvents)
 
     // Profile routes
-    router.POST("/profile/upload_profile_image", requests.UploadUserProfilePicture)
+    router.POST("/profile/upload_profile_image", middleware.RequiredAuth, requests.UploadUserProfilePicture)
 
     return router
 }

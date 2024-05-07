@@ -32,7 +32,7 @@ func RequiredAuth(c *gin.Context){
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
-		// find the user with token sub, sub=em
+		// find the user with token sub, claims["sub"] = user email
 		user, err := storage.GetUserByEmail(claims["sub"].(string))
 		if err != nil {
 			c.AbortWithStatus(http.StatusUnauthorized)

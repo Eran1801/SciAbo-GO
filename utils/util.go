@@ -35,3 +35,4 @@ func ValidateDbRequirements(user *models.User) error {
 	}
 	return nil
 }
+

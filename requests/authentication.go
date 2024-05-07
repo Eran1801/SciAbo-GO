@@ -35,7 +35,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	SuccessResponse(c, "User created successfully", user.Email)
+	SuccessResponse(c, "User created successfully",nil)
 }
 
 func Login(c *gin.Context) {
@@ -83,8 +83,4 @@ func Login(c *gin.Context) {
 
 	// SuccessResponse(c,"token created",token_string)
 
-}
-
-func Validate(c *gin.Context) {
-	SuccessResponse(c, "I'm logged in", nil)
 }
