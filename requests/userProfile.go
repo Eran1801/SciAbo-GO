@@ -3,6 +3,7 @@ package requests
 import (
 	"log"
 	"net/http"
+	"os"
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
 
@@ -32,8 +33,10 @@ func UploadUserProfilePicture(c *gin.Context) {
 	}
 	defer file.Close()
 
+	// set the path to save in the bucket
+	file_path := "Users/" + user_email + "/profile picture" + header.Filename 
+
 	// Upload file to S3 and get the URL
-	file_path := "Users/" + user_email + "/profile picture" + header.Filename
 	image_url, err := storage.UploadFileToS3(file, user_email, file_path)
 	if err != nil {
 		ErrorResponse(c, "Failed to upload file")
@@ -41,11 +44,14 @@ func UploadUserProfilePicture(c *gin.Context) {
 		return
 	}
 
-	// Update the user in the database with the new profile image URL
+	// set what to update
 	updates := map[string]interface{}{
 		"profile_image_url": image_url,
 	}
-	if err := storage.UpdateUser(user_email, updates); err != nil {
+
+	// Update the user in the database with the new profile image URL
+	collection_name := os.Getenv("USER_COLLECTION")
+	if err := storage.UpdateDocDB(collection_name, user.(*models.User).ID, updates); err != nil {
 		ErrorResponse(c, "Error updating user")
 		return
 	}

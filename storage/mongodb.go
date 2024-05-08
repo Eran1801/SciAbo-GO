@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sci-abo-go/models"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var client *mongo.Client
+
+// Define a generic model interface
+type Model interface{}
 
 // initialize connects to MongoDB
 func InitializeDB() {
@@ -30,23 +33,37 @@ func InitializeDB() {
 
 	log.Println("Connected to MongoDB!")
 
-	// call the unique email index creation
-	err = CreatingIndexesDB(client)
+	// create unique index for User model by email
+	user_collection_name := os.Getenv("USER_COLLECTION")
+	index_options := options.Index().SetUnique(true)
+	keys := bson.D{{Key: "email", Value: 1}}
+
+	err = CreatingIndexesDB(user_collection_name, keys, index_options, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create ttl deleting after 5 minutes index in the db for PasswordResetData model
+	reset_code_collection_name := os.Getenv("RESET_CODE_COLLECTION")
+	index_options = options.Index().SetExpireAfterSeconds(300) // 300 seconds = 5 minutes
+	keys = bson.D{{Key: "time", Value: 1}}
+
+	err = CreatingIndexesDB(reset_code_collection_name, keys, index_options, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 }
 
-func CreatingIndexesDB(client *mongo.Client) error {
+func CreatingIndexesDB(collection_name string, keys bson.D, index_options *options.IndexOptions, client *mongo.Client) error {
 	if client == nil {
 		return fmt.Errorf("mongoDB client is not initialized")
 	}
-	collection := GetUserCollection()
+	collection := GetCollection(collection_name)
 
 	index_model := mongo.IndexModel{
-		Keys:    bson.D{{Key: "email", Value: 1}}, // index in ascending order
-		Options: options.Index().SetUnique(true),  // set the unique constraint
+		Keys:    keys,          // index in ascending order
+		Options: index_options, // set the unique constraint
 	}
 
 	// create the index
@@ -55,40 +72,15 @@ func CreatingIndexesDB(client *mongo.Client) error {
 		return fmt.Errorf("failed to create index")
 	}
 
-	log.Println("Creating indexes in mongodb was ended successfully")
+	log.Printf("Creating indexes in mongodb for %s collection was ended successfully", collection_name)
 	return nil
 }
 
-func GetUserCollection() *mongo.Collection {
-	user_collection_name := os.Getenv("USER_COLLECTION")
-	database := os.Getenv("DB_NAME")
-	return client.Database(database).Collection(user_collection_name)
-}
+func UpdateDocDB(collection_name string, id primitive.ObjectID, updates map[string]interface{}) error {
 
-func GetUserByEmail(email string) (*models.User, error) {
+	collection := GetCollection(collection_name)
 
-	var user models.User
-
-	collection := GetUserCollection()
-
-	filter := bson.M{"email": email} // set the filter to retrieve data from the db
-
-	err := collection.FindOne(context.TODO(), filter).Decode(&user) // check in the db and decode to the user variable
-	if err != nil {
-		if err == mongo.ErrNilDocument {
-			return nil, nil // no docs was found
-		}
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func UpdateUser(email string, updates map[string]interface{}) error {
-
-	collection := GetUserCollection()
-
-	filter := bson.M{"email": email}
+	filter := bson.M{"_id": id}
 	update := bson.M{"$set": updates} // updates it's a map with the fields to update
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
@@ -98,21 +90,8 @@ func UpdateUser(email string, updates map[string]interface{}) error {
 	return nil
 }
 
-func SaveUserInDatabase(user *models.User) error {
 
-	// Get the User collection
-	user_collection := GetUserCollection()
-
-	// Insert the user into the MongoDB collection
-	_, err := user_collection.InsertOne(context.Background(), user)
-	// checks for errors
-	if err != nil {
-		// checks if the email is already exist in the db
-		if mongo.IsDuplicateKeyError(err) {
-			return fmt.Errorf("email already exists")
-		} else { // other errors
-			return fmt.Errorf(err.Error())
-		}
-	}
-	return nil
+func GetCollection(collection_name string) *mongo.Collection {
+	database := os.Getenv("DB_NAME")
+	return client.Database(database).Collection(collection_name)
 }
