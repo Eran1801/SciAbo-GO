@@ -13,7 +13,7 @@ type User struct {
     LastName                        string                  `json:"last_name" bson:"last_name" validate:"required"`
     Email                           string                  `json:"email" bson:"email" validate:"required,email"`
     Password                        string                  `json:"password" bson:"password" validate:"required,passwordPattern"`
-    ConfirmPassword                 string                  `json:"confirm_password" bson:"confirm_password" validate:"required,eqfield=Password"` // bson "-" tells mongo to skip this in saving to the db
+    ConfirmPassword                 string                  `json:"confirm_password" bson:"-" validate:"required,eqfield=Password"`
     ProfileImageURL                 string                  `json:"profile_image" bson:"profile_image_url"`
     LinkedinProfile                 string                  `json:"linkedin_profile" bson:"linkedin_profile" validate:"url"`
     Country                         string                  `json:"user_country" bson:"user_country" validate:"required"`
@@ -60,4 +60,3 @@ func ValidatePassword(f1 validator.FieldLevel) bool {
     // Check all conditions are met
     return hasLower && hasUpper && hasDigit && hasSymbol && hasMinLength
 }
-

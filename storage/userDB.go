@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sci-abo-go/models"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -35,7 +36,7 @@ func GetUserByEmail(email string) (*models.User, error) {
 
 	collection := GetCollection(os.Getenv("USER_COLLECTION"))
 
-	filter := bson.M{"email": email} // set the filter to retrieve data from the db
+	filter := bson.M{"email": strings.ToLower(email)} // set the filter to retrieve data from the db
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&user) // check in the db and decode to the user variable
 	if err != nil {

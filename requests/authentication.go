@@ -7,6 +7,7 @@ import (
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
 	"sci-abo-go/utils"
+	"sci-abo-go/utils/html"
 	"strings"
 	"time"
 
@@ -21,6 +22,9 @@ func CreateUser(c *gin.Context) {
 		ErrorResponse(c, err.Error())
 		return
 	}
+
+	// convert email to lowercase 
+	user.Email = strings.ToLower(user.Email)
 
 	if err := utils.ValidateDbRequirements(&user); err != nil {
 		ErrorResponse(c, err.Error())
@@ -39,6 +43,7 @@ func CreateUser(c *gin.Context) {
 
 	SuccessResponse(c, "User created successfully", nil)
 }
+
 
 func Login(c *gin.Context) {
 
@@ -84,6 +89,7 @@ func Login(c *gin.Context) {
 	c.SetCookie("Authorization", token_string, 3600*24*30, "/", "localhost", false, true)
 }
 
+
 func ForgotPassword(c *gin.Context) {
 
 	var forget_password utils.ForgetPassword
@@ -94,38 +100,32 @@ func ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	email := forget_password.Email
-	if strings.Contains(email, "@") {
+	// first we need to check if there is any user with this email in our db
+	user, _ := storage.GetUserByEmail(strings.ToLower(forget_password.Email))
+	if user == nil {
+		ErrorResponse(c,"email not found")
+		return
+	}
+	
+	// create reset code instance
+	reset := utils.CreateResetCode(&reset_code)
 
-		code := utils.Create4DigitCode() // create 4 digit code
-		reset_code.Code = code
-		reset_code.Time = time.Now()
-
-		// save the code in the db
-		id, err := storage.InsertResetCodeDB(&reset_code)
-		if err != nil {
-			ErrorResponse(c, err.Error())
-			return
-		}
-
-		data := map[string]interface{}{
-			"reset_code_id":   id,
-		}
-
-		// send email to user with the code
-		// err := utils.SendEmailWithGoMail(email, "utils/html/forget_password.html", code)
-		// if err != nil {
-		// 	ErrorResponse(c, "Failed to send email")
-		// } else {
-		SuccessResponse(c, "Mail send successfully", data)
-		// }
-
-	} else {
-		ErrorResponse(c, "Email not valid")
+	// inserting reset code to the db for 5 minutes
+	code, err := storage.InsertResetCodeDB(&reset)
+	if err != nil { 
+		ErrorResponse(c, err.Error())
 		return
 	}
 
+	// send email to user with the code
+	err = utils.SendEmailWithGoMail(user.Email, html.GetEmailTemplate("reset_code"), code)
+	if err != nil {
+		ErrorResponse(c, "Failed to send email")
+	} else {
+	SuccessResponse(c, "Mail send successfully", code)
+		}
 }
+
 
 func ValidateResetCode(c *gin.Context) {
 	
@@ -139,7 +139,6 @@ func ValidateResetCode(c *gin.Context) {
 	// retrieve the reset code model from db using the id
 	model, err := storage.GetResetCodeByID(utils.StringToPrimitive(validate_reset.ID))
 	if err != nil {
-		log.Println(err.Error())
 		ErrorResponse(c,err.Error())
 		return
 	}
@@ -153,34 +152,67 @@ func ValidateResetCode(c *gin.Context) {
 	SuccessResponse(c,"Valid code",nil)
 }
 
+
 func ResetPassword(c *gin.Context) {
 
 	var reset_password utils.ResetPassword
 
 	if err := c.ShouldBindJSON(&reset_password); err != nil {
-		ErrorResponse(c, "error in binding JSON")
+		ErrorResponse(c, "`error in binding JSON`")
 		return
 	}
-
-	// todo: encrypt,verify user, lower the email before saving.
 
 	if reset_password.Password == reset_password.ConfirmPassword {
 		
 		// set the updates to know which fields to update in the db
+		encrypted_password, _ := bcrypt.GenerateFromPassword([]byte(reset_password.Password), bcrypt.DefaultCost)
 		updates := map[string]interface{}{
-			"password": reset_password.Password,
+			"password": string(encrypted_password),
 		}
 
 		// retrieve user to update
 		user, _ := storage.GetUserByEmail(reset_password.Email)
 
-		// update doc
-		storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user.ID, updates)
+		// update user password in the db
+		err := storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user.ID, updates)
+		if err != nil { 
+			ErrorResponse(c,err.Error())
+			return
+		}
 
-		SuccessResponse(c, "passwords match", nil)
+		SuccessResponse(c, "passwords change successfully", nil)
 		return
 	} else {
 		ErrorResponse(c, "passwords won't match")
+		return
 	}
 
+}
+
+func ResendResetCode(c *gin.Context) {
+
+	var reset_code_entity utils.ResendCode
+
+	err := c.ShouldBindJSON(&reset_code_entity)
+	if err != nil {
+		ErrorResponse(c, err.Error())
+		return
+	}
+
+	// Initialize the reset variable
+	reset := &models.ResetCode{}
+
+	code := utils.Create4DigitCode()
+	reset.Code = code
+	reset.Time = time.Now()
+
+	id, err := storage.InsertResetCodeDB(reset)
+	if err != nil {
+		log.Println(err.Error())
+		ErrorResponse(c, err.Error())
+		return
+	}
+	// utils.SendEmailWithGoMail(reset_code_entity.Email, html.GetEmailTemplate("reset_code"), code)
+
+	SuccessResponse(c, "code save and send successfully", id)
 }

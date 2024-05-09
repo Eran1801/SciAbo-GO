@@ -12,11 +12,14 @@ func InitializerRoutes() *gin.Engine {
 	router := gin.Default()
 
 	// auth routes
-	router.POST("/auth/register", requests.CreateUser)
-	router.POST("/auth/login", requests.Login)
-	router.POST("/auth/forget_password", requests.ForgotPassword)
-	router.POST("/auth/validate_reset_code", requests.ValidateResetCode)
-	router.POST("/auth/reset_password", requests.ResetPassword)
+	router.POST("/api/auth/register", requests.CreateUser)
+	router.POST("/api/auth/login", requests.Login)
+
+	// forgot password routes 
+	router.POST("/api/auth/forgot_password", requests.ForgotPassword)
+	router.POST("/api/auth/forgot_password/validate_reset_code", requests.ValidateResetCode)
+	router.POST("/api/auth/forgot_password/reset_password", requests.ResetPassword)
+	router.POST("/api/auth/forgot_password/resend_reset_code", requests.ResendResetCode)
 
 
 	// events routes

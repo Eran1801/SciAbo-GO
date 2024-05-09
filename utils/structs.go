@@ -8,19 +8,25 @@ type LoginRequest struct {
 }
 
 type ForgetPassword struct {
-	Email string `json:"email"`
+	Email string `json:"email" validate:"email"`
 }
 
 type ResetPassword struct {
 
 	Email 				string 		`json:"email" bson:"email"`
-	Password 			string 		`json:"password"`
-	ConfirmPassword 	string 		`json:"confirm_password" validate:"eqfield=Password"`
+	Password 			string 		`json:"password" bson:"password"`
+	ConfirmPassword 	string 		`json:"confirm_password" bson:"confirm_password"`
 }
 
 type ValidateResetCode struct {
 
 	ID 		 	string 	 `json:"id" bson:"id"`
 	UserCode 	string 	 `json:"user_code" bson:"user_code"`
+}
+
+type ResendCode struct {
+
+	Email string `json:"id" bson:"id"`
+
 }
 

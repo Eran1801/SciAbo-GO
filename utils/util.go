@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"sci-abo-go/models"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/gomail.v2"
@@ -96,4 +97,14 @@ func StringToPrimitive(hex string) primitive.ObjectID {
 
     oid, _ := primitive.ObjectIDFromHex(hex)
     return oid
+}
+
+func CreateResetCode(reset *models.ResetCode) models.ResetCode {
+
+	code := Create4DigitCode() // create 4 digit code
+	reset.Code = code
+	reset.Time = time.Now()
+
+	return *reset
+
 }
