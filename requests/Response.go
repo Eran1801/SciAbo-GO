@@ -3,7 +3,6 @@ package requests
 import (
     "net/http"
     "github.com/gin-gonic/gin"
-    
 )
 
 func ErrorResponse(c *gin.Context, message string) {
