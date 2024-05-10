@@ -1,13 +1,26 @@
-package requests
+package requests 
 
 import (
-	"github.com/gin-gonic/gin"
+	"sci-abo-go/models"
 
+	"github.com/gin-gonic/gin"
 )
 
-func GetAllEvents(c *gin.Context) {
+func AddEvent(c *gin.Context) {
 
 	user, _ := c.Get("user")
+	var event models.Event
 
-	SuccessResponse(c,"inside get_all_events function",user)
+	err := c.ShouldBindJSON(&event)
+	if err != nil {
+		ErrorResponse(c, err.Error())
+		return		
+	}
+
+	id, err = storage.InsertEventDB(event)
+
+	event_ids := user.(*models.User).CreatedEventIDs
+	append(event_ids, id)
+
+
 }

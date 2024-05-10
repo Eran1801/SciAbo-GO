@@ -22,8 +22,8 @@ type User struct {
     ResearchOverseer                string                  `json:"research_overseer" bson:"research_overseer"`
     Industry                        string                  `json:"industry" bson:"industry" validate:"required"`
     About                           string                  `json:"about" bson:"about" validate:"required"`
-    JoinedEventIDs                  []string               `json:"joined_event_ids" bson:"joined_event_ids"`
-    CreatedEventIDs                 []string               `json:"created_event_ids" bson:"created_event_ids"`
+    JoinedEventIDs                  []string                `json:"joined_event_ids" bson:"joined_event_ids"`
+    CreatedEventIDs                 []string                `json:"created_event_ids" bson:"created_event_ids"`
 }
 
 // define a custom validator instance
