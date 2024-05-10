@@ -11,7 +11,7 @@ type User struct {
     ID                              primitive.ObjectID      `json:"id" bson:"_id,omitempty"`
     FirstName                       string                  `json:"first_name" bson:"first_name" validate:"required"` 
     LastName                        string                  `json:"last_name" bson:"last_name" validate:"required"`
-    Email                           string                  `json:"email" bson:"email" validate:"required,email"`
+    Email                          string                  `json:"email" bson:"email" validate:"required,email"`
     Password                        string                  `json:"password" bson:"password" validate:"required,passwordPattern"`
     ConfirmPassword                 string                  `json:"confirm_password" bson:"-" validate:"required,eqfield=Password"`
     ProfileImageURL                 string                  `json:"profile_image" bson:"profile_image_url"`
@@ -23,7 +23,6 @@ type User struct {
     Industry                        string                  `json:"industry" bson:"industry" validate:"required"`
     About                           string                  `json:"about" bson:"about" validate:"required"`
     JoinedEventIDs                  []string                `json:"joined_event_ids" bson:"joined_event_ids"`
-    CreatedEventIDs                 []string                `json:"created_event_ids" bson:"created_event_ids"`
 }
 
 // define a custom validator instance

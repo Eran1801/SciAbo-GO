@@ -1,7 +1,8 @@
-package requests 
+package requests
 
 import (
 	"sci-abo-go/models"
+	"sci-abo-go/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,9 +18,13 @@ func AddEvent(c *gin.Context) {
 		return		
 	}
 
-	id, err = storage.InsertEventDB(event)
+	id, err = storage.InsertEventDB(&event)
+	if err != nil {
+		ErrorResponse(c, err.Error())
+		return
+	}
 
-	event_ids := user.(*models.User).CreatedEventIDs
+	event_ids := user.(*models.User).JoinedEventIDs
 	append(event_ids, id)
 
 
