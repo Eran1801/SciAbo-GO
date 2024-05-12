@@ -108,3 +108,19 @@ func CreateResetCode(reset *models.ResetCode) models.ResetCode {
 	return *reset
 
 }
+
+func StringToObjectID(ids []string) []primitive.ObjectID {
+
+	events_ids := make([]primitive.ObjectID, 0, len(ids))
+    for _, id := range ids {
+        obj_id, err := primitive.ObjectIDFromHex(id)
+        if err != nil {
+            log.Printf("Error converting event ID: %v", err)
+            continue
+        }
+        events_ids = append(events_ids, obj_id)
+    }
+
+	return events_ids
+
+}

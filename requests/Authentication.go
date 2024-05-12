@@ -36,6 +36,8 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+    user.JoinedEventIDs = make([]string, 0) // init an empty list
+
 	if err := storage.InsertUserDB(&user); err != nil {
 		ErrorResponse(c, err.Error())
 		return

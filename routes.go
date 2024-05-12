@@ -15,18 +15,18 @@ func InitializerRoutes() *gin.Engine {
 	router.POST("/api/auth/register", requests.CreateUser)
 	router.POST("/api/auth/login", requests.Login)
 
-	// forgot password routes 
+	// forgot password routes
 	router.POST("/api/auth/forgot_password", requests.ForgotPassword)
 	router.POST("/api/auth/forgot_password/validate_reset_code", requests.ValidateResetCode)
 	router.POST("/api/auth/forgot_password/reset_password", requests.ResetPassword)
 	router.POST("/api/auth/forgot_password/resend_reset_code", requests.ResendResetCode)
 
-
 	// events routes
 	router.POST("/api/event/add_event", middleware.RequiredAuth, requests.AddEvent)
+	router.GET("/api/event/get_all_user_events", middleware.RequiredAuth, requests.GetAllUserEvents)
 
 	// profile routes
-	router.POST("/profile/upload_profile_image", middleware.RequiredAuth, requests.UploadUserProfilePicture)
+	router.POST("api/profile/upload_profile_image", middleware.RequiredAuth, requests.UploadUserProfilePicture)
 
 	return router
 }
