@@ -45,6 +45,10 @@ func AddEvent(c *gin.Context) {
 }
 
 func GetAllUserEvents(c *gin.Context) {
+	/*
+	It returns all the events that the user is signed-in
+	This function returns two dict, one is past events the second is future events.
+	*/
 
 	user, exists := c.Get("user")
 	if !exists {
@@ -68,8 +72,8 @@ func GetAllUserEvents(c *gin.Context) {
 
 func GetAllParticipatesInEvent(c *gin.Context) {
 	/*
-		A function that get's as a prams a list of string that holds all id's of the users
-		that is signed to this event and return all the Users to the client.
+	A function that get's as a prams a list of string that holds all id's of the users
+	that is signed to this event and return all the Users to the client.
 	*/
 
 	var participants_ids utils.Participants
