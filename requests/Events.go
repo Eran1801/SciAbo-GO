@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"log"
 	"os"
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
@@ -58,7 +57,7 @@ func GetAllUserEvents(c *gin.Context) {
 	var user_events_ids []string = user_model.JoinedEventIDs
 
 	// convert event_ids(string) to ObjectID
-	event_ids := utils.StringToObjectID(user_events_ids)
+	event_ids := utils.FromStringListToPrimitiveList(user_events_ids)
 
 	// fetch all the events(models.Event) that the user is sign-in to order by past and future events
 	events := storage.FetchUserEvents(event_ids)
@@ -69,13 +68,25 @@ func GetAllUserEvents(c *gin.Context) {
 
 func GetAllParticipatesInEvent(c *gin.Context) {
 	/*
-	A function that get's as a prams a list of string that holds all id's of the users 
-	that is signed to this event and return all the Users to the client.
+		A function that get's as a prams a list of string that holds all id's of the users
+		that is signed to this event and return all the Users to the client.
 	*/
 
-	participants_ids, _ := c.Get("participants")
-	log.Printf("participants_ids % v", participants_ids)
+	var participants_ids utils.Participants
+	err := c.ShouldBindJSON(&participants_ids)
+	if err != nil {
+		ErrorResponse(c, err.Error())
+		return
+	}
 
-	SuccessResponse(c,"success",participants_ids)
+	participants_ids_primitive := utils.FromStringListToPrimitiveList(participants_ids.Participants)
+
+	users, _ := storage.GetUsersByIDs(participants_ids_primitive)
+
+	SuccessResponse(c, "success", users)
 
 }
+
+
+
+

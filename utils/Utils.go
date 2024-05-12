@@ -48,7 +48,7 @@ func Create4DigitCode() string {
 
 	result := ""
 
-	for i:= 0; i < 4; i++ {
+	for i := 0; i < 4; i++ {
 		random_number := fmt.Sprint(rand.Intn(9) + 1)
 		result += random_number
 	}
@@ -57,37 +57,37 @@ func Create4DigitCode() string {
 }
 
 func SendEmailWithGoMail(to string, templatePath string, code string) error {
-    // Prepare the email template
-    var body bytes.Buffer
-    t, _ := template.ParseFiles(templatePath)
+	// Prepare the email template
+	var body bytes.Buffer
+	t, _ := template.ParseFiles(templatePath)
 
-    // Execute the template with the provided data
-    err := t.Execute(&body, struct{ Code string }{Code: code})
-    if err != nil {
-        log.Fatalf("Error executing template: %v", err)
-        return err
-    }
+	// Execute the template with the provided data
+	err := t.Execute(&body, struct{ Code string }{Code: code})
+	if err != nil {
+		log.Fatalf("Error executing template: %v", err)
+		return err
+	}
 
-    // Create a new message
-    m := gomail.NewMessage()
+	// Create a new message
+	m := gomail.NewMessage()
 
-    // Set the sender and recipient(s)
-    m.SetHeader("From", "SciAboConferenceHub@outlook.com")
-    m.SetHeader("To", to)
+	// Set the sender and recipient(s)
+	m.SetHeader("From", "SciAboConferenceHub@outlook.com")
+	m.SetHeader("To", to)
 
-    // Set the subject
-    m.SetHeader("Subject", "Forget Password Code")
+	// Set the subject
+	m.SetHeader("Subject", "Forget Password Code")
 
-    // Set the email body as HTML
-    m.SetBody("text/html", body.String())
+	// Set the email body as HTML
+	m.SetBody("text/html", body.String())
 
-    // Configure the SMTP dialer
-    d := gomail.NewDialer("smtp.office365.com", 587, "SciAboConferenceHub@outlook.com", "Eran1302")
+	// Configure the SMTP dialer
+	d := gomail.NewDialer("smtp.office365.com", 587, "SciAboConferenceHub@outlook.com", "Eran1302")
 
-    // Now send the email
-    if err := d.DialAndSend(m); err != nil {
-        log.Fatalf("Error sending email: %v", err)
-    }
+	// Now send the email
+	if err := d.DialAndSend(m); err != nil {
+		log.Fatalf("Error sending email: %v", err)
+	}
 
 	return nil
 }
@@ -95,8 +95,8 @@ func SendEmailWithGoMail(to string, templatePath string, code string) error {
 func StringToPrimitive(hex string) primitive.ObjectID {
 	// convert from primitive.ObjectID to string
 
-    oid, _ := primitive.ObjectIDFromHex(hex)
-    return oid
+	oid, _ := primitive.ObjectIDFromHex(hex)
+	return oid
 }
 
 func CreateResetCode(reset *models.ResetCode) models.ResetCode {
@@ -109,18 +109,47 @@ func CreateResetCode(reset *models.ResetCode) models.ResetCode {
 
 }
 
-func StringToObjectID(ids []string) []primitive.ObjectID {
+func FromStringListToPrimitiveList(ids []string) []primitive.ObjectID {
 
 	events_ids := make([]primitive.ObjectID, 0, len(ids))
-    for _, id := range ids {
-        obj_id, err := primitive.ObjectIDFromHex(id)
-        if err != nil {
-            log.Printf("Error converting event ID: %v", err)
-            continue
-        }
-        events_ids = append(events_ids, obj_id)
-    }
+	for _, id := range ids {
+		obj_id, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			log.Printf("Error converting event ID: %v", err)
+			continue
+		}
+		events_ids = append(events_ids, obj_id)
+	}
 
 	return events_ids
 
+}
+
+func DivideEventsToPastFuture(events []models.Event) map[string][]models.Event {
+	// Prepare to separate the events into past and future
+    now := time.Now()
+    past_events := make([]models.Event, 0)
+    future_events := make([]models.Event, 0)
+
+    for _, event := range events {
+        startDate, err := time.Parse("2006-01-02", event.StartDate) // Assuming date format is YYYY-MM-DD
+        if err != nil {
+            log.Printf("Error parsing start date for event ID %s: %v", event.ID.Hex(), err)
+            continue
+        }
+
+        if startDate.Before(now) {
+            past_events = append(past_events, event)
+        } else {
+            future_events = append(future_events, event)
+        }
+    }
+
+    // Categorize events into a map of past and future
+    categorizedEvents := map[string][]models.Event{
+        "past_events":   past_events,
+        "future_events": future_events,
+    }
+
+    return categorizedEvents
 }

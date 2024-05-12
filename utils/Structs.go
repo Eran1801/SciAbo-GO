@@ -30,3 +30,8 @@ type ResendCode struct {
 
 }
 
+type Participants struct {
+
+	Participants  []string `json:"participants" bson:"participants"`
+}
+

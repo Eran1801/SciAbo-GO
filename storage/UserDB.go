@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -49,3 +50,21 @@ func GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
+func GetUsersByIDs(user_ids []primitive.ObjectID) ([](models.User), error) {
+
+	event_collection := GetCollection(os.Getenv("USER_COLLECTION"))
+    var users []models.User
+    filter := bson.M{"_id": bson.M{"$in": user_ids}}
+    cursor, err := event_collection.Find(context.Background(), filter)
+    if err != nil {
+        return nil, err
+    }
+
+    err = cursor.All(context.Background(), &users)
+	if err != nil {
+	 	return nil, err
+	}
+
+	return users, nil
+
+}

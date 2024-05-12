@@ -6,7 +6,8 @@ import (
 	"log"
 	"os"
 	"sci-abo-go/models"
-	"time"
+	"sci-abo-go/utils"
+
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -77,7 +78,7 @@ func FetchUserEvents(events_ids []primitive.ObjectID) map[string][]models.Event 
 		that the user is signed-in to, separate to past and future events. 
 	*/
 
-	event_collection := GetCollection("events")
+	event_collection := GetCollection(os.Getenv("EVENTS_COLLECTION"))
     var events []models.Event
     filter := bson.M{"_id": bson.M{"$in": events_ids}}
     cursor, err := event_collection.Find(context.Background(), filter)
@@ -91,37 +92,8 @@ func FetchUserEvents(events_ids []primitive.ObjectID) map[string][]models.Event 
 	 	return nil
 	}
 
-	process_events := DivideEventsToPastFuture(events)
+	process_events := utils.DivideEventsToPastFuture(events)
 
 	return process_events
 }
 
-
-func DivideEventsToPastFuture(events []models.Event) map[string][]models.Event {
-	// Prepare to separate the events into past and future
-    now := time.Now()
-    past_events := make([]models.Event, 0)
-    future_events := make([]models.Event, 0)
-
-    for _, event := range events {
-        startDate, err := time.Parse("2006-01-02", event.StartDate) // Assuming date format is YYYY-MM-DD
-        if err != nil {
-            log.Printf("Error parsing start date for event ID %s: %v", event.ID.Hex(), err)
-            continue
-        }
-
-        if startDate.Before(now) {
-            past_events = append(past_events, event)
-        } else {
-            future_events = append(future_events, event)
-        }
-    }
-
-    // Categorize events into a map of past and future
-    categorizedEvents := map[string][]models.Event{
-        "past_events":   past_events,
-        "future_events": future_events,
-    }
-
-    return categorizedEvents
-}
