@@ -90,7 +90,3 @@ func GetAllParticipatesInEvent(c *gin.Context) {
 	SuccessResponse(c, "success", users)
 
 }
-
-
-
-

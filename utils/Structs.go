@@ -35,3 +35,10 @@ type Participants struct {
 	Participants  []string `json:"participants" bson:"participants"`
 }
 
+type ChangePassword struct { 
+
+	CurrentPassword 		string 	`json:"current_password" bson:"current_password"`
+	NewPassword 			string	`json:"new_password" bson:"new_password"`
+	ConfirmNewPassword 		string	`json:"confirm_new_password" bson:"confirm_new_password"`
+
+}

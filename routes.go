@@ -14,6 +14,7 @@ func InitializerRoutes() *gin.Engine {
 	// auth routes
 	router.POST("/api/auth/register", requests.CreateUser)
 	router.POST("/api/auth/login", requests.Login)
+	router.POST("/api/auth/change_password", middleware.RequiredAuth, requests.ChangePassword)
 
 	// forgot password routes
 	router.POST("/api/auth/forgot_password", requests.ForgotPassword)

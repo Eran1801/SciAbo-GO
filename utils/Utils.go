@@ -16,14 +16,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func EncryptPassword(user *models.User) error {
 
-	hash_password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+func EncryptPassword(password string) string {
+
+	hash_password, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("field to hash password")
+		return "field to hash password"
 	}
-	user.Password = string(hash_password)
-	return nil
+	return string(hash_password)
 }
 
 func ValidateDbRequirements(user *models.User) error {
@@ -94,13 +94,12 @@ func SendEmailWithGoMail(to string, templatePath string, code string) error {
 
 func StringToPrimitive(hex string) primitive.ObjectID {
 	// convert from primitive.ObjectID to string
-
 	oid, _ := primitive.ObjectIDFromHex(hex)
 	return oid
 }
 
 func CreateResetCode(reset *models.ResetCode) models.ResetCode {
-
+	// create the entity of the ResetCode struct 
 	code := Create4DigitCode() // create 4 digit code
 	reset.Code = code
 	reset.Time = time.Now()
@@ -115,24 +114,26 @@ func FromStringListToPrimitiveList(ids []string) []primitive.ObjectID {
 	for _, id := range ids {
 		obj_id, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
-			log.Printf("Error converting event ID: %v", err)
 			continue
 		}
 		events_ids = append(events_ids, obj_id)
 	}
 
 	return events_ids
-
 }
 
 func DivideEventsToPastFuture(events []models.Event) map[string][]models.Event {
-	// Prepare to separate the events into past and future
+	// when the user enter the section of 'my events' the events will shown divided to past and future events
+
     now := time.Now()
+	
+	// init 2 arrays of events to store past and future events
     past_events := make([]models.Event, 0)
     future_events := make([]models.Event, 0)
 
+	// iterate all the events and categorize them according to their date
     for _, event := range events {
-        startDate, err := time.Parse("2006-01-02", event.StartDate) // Assuming date format is YYYY-MM-DD
+        startDate, err := time.Parse("2006-01-02", event.StartDate)
         if err != nil {
             log.Printf("Error parsing start date for event ID %s: %v", event.ID.Hex(), err)
             continue
@@ -145,7 +146,7 @@ func DivideEventsToPastFuture(events []models.Event) map[string][]models.Event {
         }
     }
 
-    // Categorize events into a map of past and future
+    // categorize events into a map of past and future
     categorizedEvents := map[string][]models.Event{
         "past_events":   past_events,
         "future_events": future_events,

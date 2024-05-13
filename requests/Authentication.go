@@ -1,13 +1,12 @@
 package requests
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
 	"sci-abo-go/utils"
-	"sci-abo-go/utils/html"
+	// "sci-abo-go/utils/html"
 	"strings"
 	"time"
 
@@ -30,11 +29,8 @@ func CreateUser(c *gin.Context) {
 		ErrorResponse(c, err.Error())
 		return
 	}
-
-	if err := utils.EncryptPassword(&user); err != nil {
-		ErrorResponse(c, err.Error())
-		return
-	}
+	
+	user.Password = utils.EncryptPassword(user.Password)
 
     user.JoinedEventIDs = make([]string, 0) // init an empty list
 
@@ -103,7 +99,7 @@ func ForgotPassword(c *gin.Context) {
 	}
 
 	// first we need to check if there is any user with this email in our db
-	user, _ := storage.GetUserByEmail(strings.ToLower(forget_password.Email))
+	user, _ := storage.GetUserByEmail(forget_password.Email)
 	if user == nil {
 		ErrorResponse(c,"email not found")
 		return
@@ -119,13 +115,15 @@ func ForgotPassword(c *gin.Context) {
 		return
 	}
 
+	// todo: needs to remove the comment
 	// send email to user with the code
-	err = utils.SendEmailWithGoMail(user.Email, html.GetEmailTemplate("reset_code"), code)
-	if err != nil {
-		ErrorResponse(c, "Failed to send email")
-	} else {
-	SuccessResponse(c, "Mail send successfully", code)
-		}
+	// err = utils.SendEmailWithGoMail(user.Email, html.GetEmailTemplate("reset_code"), code)
+	// if err != nil {
+	// 	ErrorResponse(c, "Failed to send email")
+	// } else {
+
+		SuccessResponse(c, "Mail send successfully", code)
+	// }
 }
 
 
@@ -139,13 +137,13 @@ func ValidateResetCode(c *gin.Context) {
 	}
 
 	// retrieve the reset code model from db using the id
-	model, err := storage.GetResetCodeByID(utils.StringToPrimitive(validate_reset.ID))
-	if err != nil {
-		ErrorResponse(c,err.Error())
+	model, _ := storage.GetResetCodeByID(utils.StringToPrimitive(validate_reset.ID))
+	if model == nil {
+		ErrorResponse(c, "code expired")
 		return
 	}
 
-	// check equal codes
+	// check if the code is correct
 	if model.Code != validate_reset.UserCode {
 		ErrorResponse(c,"Code not match")
 		return
@@ -167,16 +165,20 @@ func ResetPassword(c *gin.Context) {
 	if reset_password.Password == reset_password.ConfirmPassword {
 		
 		// set the updates to know which fields to update in the db
-		encrypted_password, _ := bcrypt.GenerateFromPassword([]byte(reset_password.Password), bcrypt.DefaultCost)
+		encrypted_password := utils.EncryptPassword(reset_password.Password)
 		updates := map[string]interface{}{
 			"password": string(encrypted_password),
 		}
 
 		// retrieve user to update
-		user, _ := storage.GetUserByEmail(reset_password.Email)
+		user, err := storage.GetUserByEmail(reset_password.Email)
+		if err != nil {
+			ErrorResponse(c, err.Error())
+			return
+		}
 
 		// update user password in the db
-		err := storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user.ID, updates)
+		err = storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user.ID, updates)
 		if err != nil { 
 			ErrorResponse(c,err.Error())
 			return
@@ -210,11 +212,55 @@ func ResendResetCode(c *gin.Context) {
 
 	id, err := storage.InsertResetCodeDB(reset)
 	if err != nil {
-		log.Println(err.Error())
 		ErrorResponse(c, err.Error())
 		return
 	}
+	// send reset code to the user email
 	// utils.SendEmailWithGoMail(reset_code_entity.Email, html.GetEmailTemplate("reset_code"), code)
 
 	SuccessResponse(c, "code save and send successfully", id)
+}
+
+func ChangePassword(c *gin.Context) { 
+
+	user, _ := c.Get("user")
+	user_model, exists := user.(*models.User)
+	if !exists {  // todo: needs to add all the places
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	var request_data utils.ChangePassword
+
+	err := c.ShouldBindJSON(&request_data)
+	if err != nil { 
+		ErrorResponse(c, err.Error())
+		return
+	}
+
+	// check if the current password is true
+	err = bcrypt.CompareHashAndPassword([]byte(user_model.Password), []byte(request_data.CurrentPassword))
+	if err != nil {
+		ErrorResponse(c, "wrong current password")
+		return
+	}
+
+	// check match new password and confirm password
+	if request_data.NewPassword != request_data.ConfirmNewPassword {
+		ErrorResponse(c, "passwords not match")
+		return
+	}
+
+	hash_password := utils.EncryptPassword(request_data.NewPassword)
+	updates := map[string]interface{}{
+		"password": hash_password}
+
+	err = storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user_model.ID, updates)
+	if err != nil { 
+		ErrorResponse(c,err.Error())
+		return
+	}
+
+	SuccessResponse(c, "password changed successfully", nil)
+
 }
