@@ -51,7 +51,10 @@ func GetUserByEmail(email string) (*models.User, error) {
 }
 
 func GetUsersByIDs(user_ids []primitive.ObjectID) ([](models.User), error) {
-
+	/*
+	Given strings of id's of users
+	this function returns all those users
+	*/
 	event_collection := GetCollection(os.Getenv("USER_COLLECTION"))
     var users []models.User
     filter := bson.M{"_id": bson.M{"$in": user_ids}}

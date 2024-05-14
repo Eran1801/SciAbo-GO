@@ -8,9 +8,9 @@ import (
 	"sci-abo-go/models"
 	"sci-abo-go/utils"
 
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func InsertEventDB(model *models.Event) (string, error) {
@@ -40,15 +40,17 @@ func AddParticipantToEvent(collection_name string, event_id primitive.ObjectID, 
 	// get event collection
 	collection := GetCollection(collection_name)
 
-	log.Printf("event_id %s", event_id)
-	log.Printf("participant_id %s", participant_id)
-
-	filter := bson.M{"_id": event_id}
+	// filter also verify that the participant_id in not already in the event participants
+	filter := bson.M{"_id": event_id, "participants": bson.M{"$ne": participant_id}}
 	update := bson.M{"$push": bson.M{"participants": participant_id}}
 
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("user already in the event participants")
 	}
 	return nil
 
@@ -72,28 +74,52 @@ func AddEventIdToUserEvents(collection_name string, user_id primitive.ObjectID, 
 }
 
 
-func FetchUserEvents(events_ids []primitive.ObjectID) map[string][]models.Event {
+func FetchUserEvents(events_ids []primitive.ObjectID) []models.Event {
 	/*
 		Given a list of id's of events, this function returns all the events
-		that the user is signed-in to, separate to past and future events. 
+		that the user is join to, separate to past and future events. 
 	*/
 
+	// gets the event collection
 	event_collection := GetCollection(os.Getenv("EVENTS_COLLECTION"))
-    var events []models.Event
-    filter := bson.M{"_id": bson.M{"$in": events_ids}}
+
+    var events []models.Event // init an empty array of Events
+
+	// set the filter to be the array of events ids
+    filter := bson.M{"_id": bson.M{"$in": events_ids}} 
+
     cursor, err := event_collection.Find(context.Background(), filter)
     if err != nil {
         log.Printf("Error fetching events: %v", err)
         return nil
     }
+	
+	// decodes all the events 
     err = cursor.All(context.Background(), &events)
 	if err != nil {
 		log.Printf("Error decoding events: %v", err)
 	 	return nil
 	}
 
-	process_events := utils.DivideEventsToPastFuture(events)
-
-	return process_events
+	return events
 }
 
+func FetchEventByID(event_id string) (*models.Event, error) { 
+
+	var event models.Event
+
+	collection := GetCollection(os.Getenv("EVENTS_COLLECTION"))
+
+	filter := bson.M{"_id" : utils.StringToPrimitive(event_id)}
+
+	err := collection.FindOne(context.TODO(), filter).Decode(&event)
+	if err != nil {
+		if err == mongo.ErrNilDocument {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return &event, nil
+	
+}

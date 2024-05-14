@@ -24,8 +24,12 @@ func InitializerRoutes() *gin.Engine {
 
 	// events routes
 	router.POST("/api/event/add_event", middleware.RequiredAuth, requests.AddEvent)
+	router.POST("/api/event/join_event", middleware.RequiredAuth, requests.JoinEvent)
+
 	router.GET("/api/event/get_all_user_events", middleware.RequiredAuth, requests.GetAllUserEvents)
 	router.GET("api/event/get_all_participants_in_event", middleware.RequiredAuth, requests.GetAllParticipatesInEvent)
+	router.GET("api/event/get_event_by_id/", middleware.RequiredAuth, requests.GetEventByID)
+
 
 	// profile routes
 	router.POST("api/profile/upload_profile_image", middleware.RequiredAuth, requests.UploadUserProfilePicture)

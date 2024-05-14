@@ -12,8 +12,14 @@ import (
 
 func UploadUserProfilePicture(c *gin.Context) {
 
-	user, _ := c.Get("user") // Extract email from the user that send with the jwt token
-	user_email := user.(*models.User).Email
+	user, _ := c.Get("user")
+	user_model, exists := user.(*models.User)
+	if !exists { 
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	user_email := user_model.Email
 
 	// Limit the size of the form to 10 MB
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10<<20)

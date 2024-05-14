@@ -225,7 +225,7 @@ func ChangePassword(c *gin.Context) {
 
 	user, _ := c.Get("user")
 	user_model, exists := user.(*models.User)
-	if !exists {  // todo: needs to add all the places
+	if !exists { 
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
