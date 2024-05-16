@@ -38,7 +38,7 @@ func UploadUserProfilePicture(c *gin.Context) {
 	file_path := "Users/" + user_email + "/profile picture" + header.Filename
 
 	// Upload file to S3 and get the URL
-	image_url, err := storage.UploadFileToS3(file, user_email, file_path)
+	image_url, err := storage.UploadFileToS3(file, file_path)
 	if err != nil {
 		ErrorResponse(c, "Failed to upload file")
 		log.Println("Error uploading file to S3: ", err)

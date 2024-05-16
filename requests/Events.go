@@ -1,6 +1,7 @@
 package requests
 
 import (
+	"net/http"
 	"os"
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
@@ -180,6 +181,58 @@ func SearchEvent(c *gin.Context){
 	}
 	
 	SuccessResponse(c, "success", filter_events)
+
+}
+
+func UploadEventPic(c *gin.Context) {
+
+	event, err := storage.FetchEventByID(c.Query("event_id"))
+	if err != nil {
+		ErrorResponse(c, err.Error())
+		return
+	}
+
+	// Limit the size of the form to 10 MB
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10<<20)
+
+	// Parse the multipart form
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+		ErrorResponse(c, "File too large or incorrect data")
+		return
+	}
+
+	// Retrieve the file from the form
+	file, header, err := c.Request.FormFile("event_pic")
+	if err != nil {
+		ErrorResponse(c, "Error retrieving file from form")
+		return
+	}
+	defer file.Close()
+
+	// set the path to save in the bucket
+	file_path := "Events/" + event.ID.Hex() + "/event pic" + header.Filename
+
+	// Upload file to S3 and get the URL
+	image_url, err := storage.UploadFileToS3(file, file_path)
+	if err != nil {
+		ErrorResponse(c, "Failed to upload file")
+		return
+	}
+
+	// set what to update
+	updates := map[string]interface{}{
+		"event_image_url": image_url,
+	}
+
+	// Update the user in the database with the new profile image URL
+	collection_name := os.Getenv("USER_COLLECTION")
+	if err := storage.UpdateDocDB(collection_name, event.ID, updates); err != nil {
+		ErrorResponse(c, "Error updating user")
+		return
+	}
+
+	SuccessResponse(c, "Profile image upload successfully", nil)
+
 
 }
 

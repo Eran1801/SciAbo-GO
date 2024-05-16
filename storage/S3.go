@@ -12,7 +12,7 @@ import (
 )
 
 
-func UploadFileToS3(file multipart.File, email string, path string) (string, error) {
+func UploadFileToS3(file multipart.File, path string) (string, error) {
 
 	s3_region := os.Getenv("AWS_S3_REGION")
 	aws_access_key := os.Getenv("AWS_ACCESS_KEY_ID")
