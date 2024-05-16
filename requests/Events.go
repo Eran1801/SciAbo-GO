@@ -225,13 +225,13 @@ func UploadEventPic(c *gin.Context) {
 	}
 
 	// Update the user in the database with the new profile image URL
-	collection_name := os.Getenv("USER_COLLECTION")
+	collection_name := os.Getenv("EVENTS_COLLECTION")
 	if err := storage.UpdateDocDB(collection_name, event.ID, updates); err != nil {
 		ErrorResponse(c, "Error updating user")
 		return
 	}
 
-	SuccessResponse(c, "Profile image upload successfully", nil)
+	SuccessResponse(c, "Event image upload successfully", nil)
 
 
 }
