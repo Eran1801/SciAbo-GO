@@ -18,6 +18,8 @@ func AddEvent(c *gin.Context) {
 		return
 	}
 
+	event.Verified = "0" // new event needs to be approved. in search event it's extract only events with Verified value of "1"
+
 	// initialize empty list of participants before saving
 	event.Participants = make([]string, 0)
 
@@ -171,6 +173,7 @@ func SearchEvent(c *gin.Context){
 
 	query := utils.CheckFilters(filters) 
 
+	query["verified"] = "1" // return only approved events by admin
 	filter_events, err := storage.FetchEventByFilters(query)
 	if err != nil { 
 		ErrorResponse(c, err.Error())
@@ -180,3 +183,4 @@ func SearchEvent(c *gin.Context){
 	SuccessResponse(c, "success", filter_events)
 
 }
+
