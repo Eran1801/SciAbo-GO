@@ -5,6 +5,7 @@ import (
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
 	"sci-abo-go/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,7 @@ func AddEvent(c *gin.Context) {
 		return
 	}
 
+	event.CreateTime = time.Now() 	// time creation of event
 	event.Verified = "0" // new event needs to be approved. in search event it's extract only events with Verified value of "1"
 
 	// initialize empty list of participants before saving
@@ -156,9 +158,6 @@ func JoinEvent(c *gin.Context) {
 	SuccessResponse(c, "success", nil)
 }
 
-// func DeleteEvent(c *gin.Context) {
-
-// }
 
 func SearchEvent(c *gin.Context){
 

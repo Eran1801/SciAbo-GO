@@ -2,6 +2,7 @@ package models
 
 import (
 	"regexp"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,6 +24,7 @@ type User struct {
 	Industry                     string             `json:"industry" bson:"industry" validate:"required"`
 	About                        string             `json:"about" bson:"about" validate:"required"`
 	JoinedEventIDs               []string           `json:"joined_event_ids" bson:"joined_event_ids"`
+	CreateTime					 time.Time			`json:"create_time" bson:"create_time"`
 }
 
 // define a custom validator instance

@@ -23,8 +23,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	// convert email to lowercase
-	user.Email = strings.ToLower(user.Email)
+	user.CreateTime = time.Now().Add(time.Hour * 3)// time creation of event
+	user.Email = strings.ToLower(user.Email) // convert email to lowercase
+
 
 	if err := utils.ValidateStruct(&user); err != nil {
 		ErrorResponse(c, err.Error())

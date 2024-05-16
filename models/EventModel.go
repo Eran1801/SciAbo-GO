@@ -18,6 +18,7 @@ type Event struct {
 	City 				string 						`json:"city" bson:"city"`
 	Verified			string						`json:"verified" bson:"verified"`
 	Participants	   []string						`json:"participants" bson:"participants"`
+	CreateTime			time.Time					`json:"create_time" bson:"create_time"` 
 
 }
 
