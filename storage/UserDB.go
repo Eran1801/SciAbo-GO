@@ -50,6 +50,7 @@ func GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
+
 func GetUsersByIDs(user_ids []primitive.ObjectID) ([](models.User), error) {
 	/*
 	Given strings of id's of users
@@ -69,5 +70,19 @@ func GetUsersByIDs(user_ids []primitive.ObjectID) ([](models.User), error) {
 	}
 
 	return users, nil
+
+}
+
+func DeleteUser(user_id primitive.ObjectID) error { 
+
+	collection := GetCollection(os.Getenv("USER_COLLECTION"))
+	
+	filter := bson.M{"_id": user_id}
+
+	_, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil{
+		return fmt.Errorf(err.Error())
+	}
+	return nil
 
 }

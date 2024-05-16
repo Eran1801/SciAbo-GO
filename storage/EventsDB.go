@@ -35,10 +35,10 @@ func InsertEventDB(model *models.Event) (string, error) {
 }
 
 
-func AddParticipantToEvent(collection_name string, event_id primitive.ObjectID, participant_id string) error {
+func AddParticipantToEvent(event_id primitive.ObjectID, participant_id string) error {
 
 	// get event collection
-	collection := GetCollection(collection_name)
+	collection := GetCollection(os.Getenv("EVENTS_COLLECTION"))
 
 	// filter also verify that the participant_id in not already in the event participants
 	filter := bson.M{"_id": event_id, "participants": bson.M{"$ne": participant_id}}
@@ -77,7 +77,7 @@ func AddEventIdToUserEvents(collection_name string, user_id primitive.ObjectID, 
 func FetchUserEvents(events_ids []primitive.ObjectID) []models.Event {
 	/*
 		Given a list of id's of events, this function returns all the events
-		that the user is join to, separate to past and future events. 
+		that the user is join to
 	*/
 
 	// gets the event collection
@@ -104,6 +104,7 @@ func FetchUserEvents(events_ids []primitive.ObjectID) []models.Event {
 	return events
 }
 
+
 func FetchEventByID(event_id string) (*models.Event, error) { 
 
 	var event models.Event
@@ -121,5 +122,48 @@ func FetchEventByID(event_id string) (*models.Event, error) {
 	}
 
 	return &event, nil
+}
+
+
+func DeleteParticipantFromEvent(event_id string, user_id string) error{
+
+	log.Printf("event id - %v", event_id)
+	log.Printf("user id - %v", user_id)
+
+	collection := GetCollection(os.Getenv("EVENTS_COLLECTION"))
+
+	filter := bson.M{"_id": utils.StringToPrimitive(event_id)}
+	update := bson.M{"$pull": bson.M{"participants": user_id}}
+
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil{
+		return fmt.Errorf(err.Error())
+	}
+
+	if result.MatchedCount == 0{
+		return fmt.Errorf("no participant found with user_id: %v in event_id: %v", user_id, event_id)
+	}
 	
+	return nil
+
+}
+
+func FetchEventByFilters(query bson.M) ([]models.Event, error) { 
+
+	var events []models.Event
+
+	collection := GetCollection(os.Getenv("EVENTS_COLLECTION"))
+	cursor, err := collection.Find(context.Background(), query)
+	if err != nil {
+		return events, err
+	}
+
+	defer cursor.Close(context.Background())
+
+	err = cursor.All(context.Background(), &events)
+	if err != nil {
+		return events, err
+	}
+
+	return events, nil
 }

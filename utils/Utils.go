@@ -6,16 +6,19 @@ import (
 	"html/template"
 	"log"
 	"math/rand"
+	"net/http"
+	"reflect"
 	"sci-abo-go/models"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/gomail.v2"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
-
 
 func EncryptPassword(password string) string {
 
@@ -26,12 +29,12 @@ func EncryptPassword(password string) string {
 	return string(hash_password)
 }
 
-func ValidateDbRequirements(user *models.User) error {
-	err := models.ValidateUser(user)
+func ValidateStruct(model interface{}) error {
+	err := models.ValidateModel(model)
 	if err != nil {
-		// Handle validation errors
+		// handle validation errors
 		errors := err.(validator.ValidationErrors)
-		// Construct error message
+		// construct error message
 		var errMsg string
 		for _, e := range errors {
 			errMsg += e.Field() + " is " + e.Tag() + "; "
@@ -93,13 +96,13 @@ func SendEmailWithGoMail(to string, templatePath string, code string) error {
 }
 
 func StringToPrimitive(hex string) primitive.ObjectID {
-	// convert from primitive.ObjectID to string
+	// convert from string to primitive.ObjectID
 	oid, _ := primitive.ObjectIDFromHex(hex)
 	return oid
 }
 
 func CreateResetCode(reset *models.ResetCode) models.ResetCode {
-	// create the entity of the ResetCode struct 
+	// create the entity of the ResetCode struct
 	code := Create4DigitCode() // create 4 digit code
 	reset.Code = code
 	reset.Time = time.Now()
@@ -125,32 +128,98 @@ func FromStringListToPrimitiveList(ids []string) []primitive.ObjectID {
 func DivideEventsToPastFuture(events []models.Event) map[string][]models.Event {
 	// when the user enter the section of 'my events' the events will shown divided to past and future events
 
-    now := time.Now()
-	
+	now := time.Now()
+
 	// init 2 arrays of events to store past and future events
-    past_events := make([]models.Event, 0)
-    future_events := make([]models.Event, 0)
+	past_events := make([]models.Event, 0)
+	future_events := make([]models.Event, 0)
 
 	// iterate all the events and categorize them according to their date
-    for _, event := range events {
-        startDate, err := time.Parse("2006-01-02", event.StartDate)
-        if err != nil {
-            log.Printf("Error parsing start date for event ID %s: %v", event.ID.Hex(), err)
-            continue
-        }
+	for _, event := range events {
+		start_date := event.StartDate
 
-        if startDate.Before(now) {
-            past_events = append(past_events, event)
-        } else {
-            future_events = append(future_events, event)
-        }
+		if start_date.Before(now) {
+			past_events = append(past_events, event)
+		} else {
+			future_events = append(future_events, event)
+		}
+	}
+
+	// categorize events into a map of past and future
+	categorizedEvents := map[string][]models.Event{
+		"past_events":   past_events,
+		"future_events": future_events,
+	}
+
+	return categorizedEvents
+}
+
+func GetUserFromCookie(c *gin.Context) *models.User {
+
+	user, _ := c.Get("user")
+	user_model, exists := user.(*models.User)
+	if !exists {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return nil
+	}
+
+	return user_model
+
+}
+
+func StructToMap(data interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	v := reflect.ValueOf(data)
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Type().Field(i)
+		fieldValue := v.Field(i).Interface()
+		jsonTag := field.Tag.Get("json")
+		if jsonTag != "" && jsonTag != "-" {
+			result[jsonTag] = fieldValue
+		} else {
+			result[field.Name] = fieldValue
+		}
+	}
+
+	return result
+}
+
+func CheckFilters(filters SearchFilters) primitive.M{ 
+
+	query := bson.M{}
+
+	if filters.ConferenceName != "" {
+		query["name"] = bson.M{"$regex":filters.ConferenceName, "$options":"i"}
+	}
+
+	if filters.Abbreviation != "" {
+        query["abbreviation"] = bson.M{"$regex": filters.Abbreviation, "$options": "i"}
     }
 
-    // categorize events into a map of past and future
-    categorizedEvents := map[string][]models.Event{
-        "past_events":   past_events,
-        "future_events": future_events,
+    if filters.Country != "" {
+        query["country"] = filters.Country
     }
 
-    return categorizedEvents
+    if filters.City != "" {
+        query["city"] = filters.City
+    }
+
+	if CheckDateIsEmpty(filters) {
+
+		start_date := time.Date(filters.StartYear, time.Month(filters.StartMonth),  1, 0, 0, 0, 0, time.UTC)
+		end_date := time.Date(filters.EndYear, time.Month(filters.EndMonth)+1, 0, 23, 59, 59, 999999999, time.UTC)
+
+		query["start_date"] = bson.M{"$gte": start_date}
+		query["end_date"] = bson.M{"$lte": end_date}
+	}
+
+	return query
+
+}
+
+func CheckDateIsEmpty(filters SearchFilters) bool {
+
+	return filters.StartYear != 0 && filters.StartMonth != 0 && filters.EndYear != 0 && filters.EndMonth != 0 
+
 }

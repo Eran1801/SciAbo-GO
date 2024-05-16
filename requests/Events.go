@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"net/http"
 	"os"
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
@@ -38,12 +37,7 @@ func GetAllUserEvents(c *gin.Context) {
 		This function returns two dict, one is past events the second is future events.
 	*/
 
-	user, _ := c.Get("user")
-	user_model, exists := user.(*models.User)
-	if !exists {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
+	user_model := utils.GetUserFromCookie(c)
 
 	// get all the events id's that the user is sign-in to
 	var user_events_ids []string = user_model.JoinedEventIDs
@@ -102,20 +96,15 @@ func GetEventByID(c *gin.Context) {
 
 func JoinEvent(c *gin.Context) {
 	/*
-	In this endpoint a user can join to an event.
-	This function do 3 main things:
-		* add user id to the event participants
-		* add event id to the user events
-		* add the details of the user on the event (when he will arrive and etc)
-	*/ 
+		In this endpoint a user can join to an event.
+		This function do 3 main things:
+			* add user id to the event participants
+			* add event id to the user events
+			* add the details of the user on the event (when he will arrive and etc)
+	*/
 
 	// get the user
-	user, _ := c.Get("user")
-	user_model, exists := user.(*models.User)
-	if !exists {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
+	user_model := utils.GetUserFromCookie(c)
 
 	// initialize the entity of the user details about join to an event
 	var event_participant models.EventParticipant
@@ -139,29 +128,55 @@ func JoinEvent(c *gin.Context) {
 
 	// update event in the db
 	obj_event_id := utils.StringToPrimitive(event_id)
-	event_collection_name := os.Getenv("EVENTS_COLLECTION")
-	err = storage.AddParticipantToEvent(event_collection_name, obj_event_id, user_model.ID.Hex())
+	err = storage.AddParticipantToEvent(obj_event_id, user_model.ID.Hex())
 	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
-	}	
-	
+	}
+
 	// add event id to the events ids array of the user (the ones he join in to)
 	user_collection_name := os.Getenv("USER_COLLECTION")
 	err = storage.AddEventIdToUserEvents(user_collection_name, user_model.ID, event_id)
 	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
-	}		
+	}
 
-	// set the user id to the join event details to assign the participant(user) to his id 
+	// set the user id to the join event details to assign the participant(user) to his id
 	event_participant.UserID = user_model.ID.Hex()
 
-	err = storage.InsertEventParticipant(event_participant)
+	err = storage.InsertEventParticipantDB(event_participant)
 	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
 	}
 
-	SuccessResponse(c,"success",nil)
+	SuccessResponse(c, "success", nil)
+}
+
+// func DeleteEvent(c *gin.Context) {
+
+// }
+
+func SearchEvent(c *gin.Context){
+
+	var filters utils.SearchFilters
+
+	// parse query params inti the filters struct
+	err := c.ShouldBindQuery(&filters)
+	if err != nil {
+		ErrorResponse(c, err.Error())
+		return
+	}
+
+	query := utils.CheckFilters(filters) 
+
+	filter_events, err := storage.FetchEventByFilters(query)
+	if err != nil { 
+		ErrorResponse(c, err.Error())
+		return
+	}
+	
+	SuccessResponse(c, "success", filter_events)
+
 }

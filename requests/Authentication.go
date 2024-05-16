@@ -6,6 +6,7 @@ import (
 	"sci-abo-go/models"
 	"sci-abo-go/storage"
 	"sci-abo-go/utils"
+
 	// "sci-abo-go/utils/html"
 	"strings"
 	"time"
@@ -22,17 +23,17 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	// convert email to lowercase 
+	// convert email to lowercase
 	user.Email = strings.ToLower(user.Email)
 
-	if err := utils.ValidateDbRequirements(&user); err != nil {
+	if err := utils.ValidateStruct(&user); err != nil {
 		ErrorResponse(c, err.Error())
 		return
 	}
-	
+
 	user.Password = utils.EncryptPassword(user.Password)
 
-    user.JoinedEventIDs = make([]string, 0) // init an empty list
+	user.JoinedEventIDs = make([]string, 0) // init an empty list
 
 	if err := storage.InsertUserDB(&user); err != nil {
 		ErrorResponse(c, err.Error())
@@ -41,7 +42,6 @@ func CreateUser(c *gin.Context) {
 
 	SuccessResponse(c, "User created successfully", nil)
 }
-
 
 func Login(c *gin.Context) {
 
@@ -87,7 +87,6 @@ func Login(c *gin.Context) {
 	c.SetCookie("Authorization", token_string, 3600*24*30, "/", "localhost", false, true)
 }
 
-
 func ForgotPassword(c *gin.Context) {
 
 	var forget_password utils.ForgetPassword
@@ -101,16 +100,16 @@ func ForgotPassword(c *gin.Context) {
 	// first we need to check if there is any user with this email in our db
 	user, _ := storage.GetUserByEmail(forget_password.Email)
 	if user == nil {
-		ErrorResponse(c,"email not found")
+		ErrorResponse(c, "email not found")
 		return
 	}
-	
+
 	// create reset code instance
 	reset := utils.CreateResetCode(&reset_code)
 
 	// inserting reset code to the db for 5 minutes
 	code, err := storage.InsertResetCodeDB(&reset)
-	if err != nil { 
+	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
 	}
@@ -122,13 +121,12 @@ func ForgotPassword(c *gin.Context) {
 	// 	ErrorResponse(c, "Failed to send email")
 	// } else {
 
-		SuccessResponse(c, "Mail send successfully", code)
+	SuccessResponse(c, "Mail send successfully", code)
 	// }
 }
 
-
 func ValidateResetCode(c *gin.Context) {
-	
+
 	var validate_reset utils.ValidateResetCode
 
 	if err := c.ShouldBindJSON(&validate_reset); err != nil {
@@ -145,13 +143,12 @@ func ValidateResetCode(c *gin.Context) {
 
 	// check if the code is correct
 	if model.Code != validate_reset.UserCode {
-		ErrorResponse(c,"Code not match")
+		ErrorResponse(c, "Code not match")
 		return
 	}
 
-	SuccessResponse(c,"Valid code",nil)
+	SuccessResponse(c, "Valid code", nil)
 }
-
 
 func ResetPassword(c *gin.Context) {
 
@@ -163,7 +160,7 @@ func ResetPassword(c *gin.Context) {
 	}
 
 	if reset_password.Password == reset_password.ConfirmPassword {
-		
+
 		// set the updates to know which fields to update in the db
 		encrypted_password := utils.EncryptPassword(reset_password.Password)
 		updates := map[string]interface{}{
@@ -179,8 +176,8 @@ func ResetPassword(c *gin.Context) {
 
 		// update user password in the db
 		err = storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user.ID, updates)
-		if err != nil { 
-			ErrorResponse(c,err.Error())
+		if err != nil {
+			ErrorResponse(c, err.Error())
 			return
 		}
 
@@ -221,19 +218,14 @@ func ResendResetCode(c *gin.Context) {
 	SuccessResponse(c, "code save and send successfully", id)
 }
 
-func ChangePassword(c *gin.Context) { 
+func ChangePassword(c *gin.Context) {
 
-	user, _ := c.Get("user")
-	user_model, exists := user.(*models.User)
-	if !exists { 
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
+	user_model := utils.GetUserFromCookie(c)
 
 	var request_data utils.ChangePassword
 
 	err := c.ShouldBindJSON(&request_data)
-	if err != nil { 
+	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
 	}
@@ -256,8 +248,8 @@ func ChangePassword(c *gin.Context) {
 		"password": hash_password}
 
 	err = storage.UpdateDocDB(os.Getenv("USER_COLLECTION"), user_model.ID, updates)
-	if err != nil { 
-		ErrorResponse(c,err.Error())
+	if err != nil {
+		ErrorResponse(c, err.Error())
 		return
 	}
 
