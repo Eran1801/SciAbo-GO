@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"reflect"
 	"sci-abo-go/models"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -205,21 +206,15 @@ func CheckFilters(filters SearchFilters) primitive.M{
         query["city"] = filters.City
     }
 
-	if CheckDateIsEmpty(filters) {
+    if filters.Year != "" {
+        year, err := strconv.Atoi(filters.Year)
+        if err == nil {
+            start_date := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+            end_date := time.Date(year, time.December, 31, 23, 59, 59, 999, time.UTC)
+            query["start_date"] = bson.M{"$gte": start_date, "$lt": end_date}
+        }
+    }
 
-		start_date := time.Date(filters.StartYear, time.Month(filters.StartMonth),  1, 0, 0, 0, 0, time.UTC)
-		end_date := time.Date(filters.EndYear, time.Month(filters.EndMonth)+1, 0, 23, 59, 59, 999999999, time.UTC)
-
-		query["start_date"] = bson.M{"$gte": start_date}
-		query["end_date"] = bson.M{"$lte": end_date}
-	}
-
-	return query
-
-}
-
-func CheckDateIsEmpty(filters SearchFilters) bool {
-
-	return filters.StartYear != 0 && filters.StartMonth != 0 && filters.EndYear != 0 && filters.EndMonth != 0 
+    return query
 
 }

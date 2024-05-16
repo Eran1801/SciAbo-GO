@@ -46,13 +46,10 @@ type UpdateUserDetailsRequest struct {
 }
 
 type SearchFilters struct {
-    StartYear       int      `form:"start_year"`
-    StartMonth      int      `form:"start_month"`
-    EndYear         int      `form:"end_year"`
-    EndMonth        int      `form:"end_month"`
-    ConferenceName  string   `form:"conference_name"`
-    Abbreviation    string   `form:"abbreviation"`
-    Country         string   `form:"country"`
-    City            string   `form:"city"`
+    Year                 string      `form:"year"`
+    ConferenceName       string      `form:"conference_name"`
+    Abbreviation         string      `form:"abbreviation"`
+    Country              string      `form:"country"`
+    City                 string      `form:"city"`
 }
 
