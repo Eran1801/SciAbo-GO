@@ -26,13 +26,13 @@ func AddEvent(c *gin.Context) {
 	// initialize empty list of participants before saving
 	event.Participants = make([]string, 0)
 
-	_, err = storage.InsertEventDB(&event)
+	id, err := storage.InsertEventDB(&event)
 	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
 	}
 
-	SuccessResponse(c, "event added successful", nil)
+	SuccessResponse(c, "event added successful", id)
 
 }
 
