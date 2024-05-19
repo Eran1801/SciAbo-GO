@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"reflect"
 	"sci-abo-go/models"
 	"strconv"
@@ -60,13 +61,13 @@ func Create4DigitCode() string {
 	return result
 }
 
-func SendEmailWithGoMail(to string, templatePath string, code string) error {
+func SendEmailWithGoMail(to string, subject string, template_path string, data string) error {
 	// Prepare the email template
 	var body bytes.Buffer
-	t, _ := template.ParseFiles(templatePath)
+	t, _ := template.ParseFiles(template_path)
 
 	// Execute the template with the provided data
-	err := t.Execute(&body, struct{ Code string }{Code: code})
+	err := t.Execute(&body, struct{ Data string }{Data: data})
 	if err != nil {
 		log.Fatalf("Error executing template: %v", err)
 		return err
@@ -76,11 +77,11 @@ func SendEmailWithGoMail(to string, templatePath string, code string) error {
 	m := gomail.NewMessage()
 
 	// Set the sender and recipient(s)
-	m.SetHeader("From", "SciAboConferenceHub@outlook.com")
+	m.SetHeader("From", os.Getenv("COMPANY_EMAIL"))
 	m.SetHeader("To", to)
 
 	// Set the subject
-	m.SetHeader("Subject", "Forget Password Code")
+	m.SetHeader("Subject", subject)
 
 	// Set the email body as HTML
 	m.SetBody("text/html", body.String())
@@ -112,7 +113,7 @@ func CreateResetCode(reset *models.ResetCode) models.ResetCode {
 
 }
 
-func FromStringListToPrimitiveList(ids []string) []primitive.ObjectID {
+func StringToPrimitiveList(ids []string) []primitive.ObjectID {
 
 	events_ids := make([]primitive.ObjectID, 0, len(ids))
 	for _, id := range ids {
@@ -186,35 +187,57 @@ func StructToMap(data interface{}) map[string]interface{} {
 	return result
 }
 
-func CheckFilters(filters SearchFilters) primitive.M{ 
+func CheckFilters(filters SearchFilters) primitive.M {
 
 	query := bson.M{}
 
 	if filters.ConferenceName != "" {
-		query["name"] = bson.M{"$regex":filters.ConferenceName, "$options":"i"}
+		query["name"] = bson.M{"$regex": filters.ConferenceName, "$options": "i"}
 	}
 
 	if filters.Abbreviation != "" {
-        query["abbreviation"] = bson.M{"$regex": filters.Abbreviation, "$options": "i"}
-    }
+		query["abbreviation"] = bson.M{"$regex": filters.Abbreviation, "$options": "i"}
+	}
 
-    if filters.Country != "" {
-        query["country"] = filters.Country
-    }
+	if filters.Country != "" {
+		query["country"] = filters.Country
+	}
 
-    if filters.City != "" {
-        query["city"] = filters.City
-    }
+	if filters.City != "" {
+		query["city"] = filters.City
+	}
 
-    if filters.Year != "" {
-        year, err := strconv.Atoi(filters.Year)
-        if err == nil {
-            start_date := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
-            end_date := time.Date(year, time.December, 31, 23, 59, 59, 999, time.UTC)
-            query["start_date"] = bson.M{"$gte": start_date, "$lt": end_date}
-        }
-    }
+	if filters.Year != "" {
+		year, err := strconv.Atoi(filters.Year)
+		if err == nil {
+			start_date := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+			end_date := time.Date(year, time.December, 31, 23, 59, 59, 999, time.UTC)
+			query["start_date"] = bson.M{"$gte": start_date, "$lt": end_date}
+		}
+	}
 
-    return query
+	return query
 
+}
+
+func PopulateMessageAndRoomStruct(message_request FirstMessageRequest, user_model *models.User, receiver_user *models.User) (models.Message, models.Room) {
+	// This function is helper function for creating an instance of Message entity and Room for Sending a message to a user
+	message := models.Message{
+		Content:        message_request.MessageContent,
+		CreatedAt:      time.Now(),
+		SenderId:       user_model.ID.Hex(), // the one is connected to the website is the one that sends the message
+		SenderFullName: user_model.FirstName + " " + user_model.LastName,
+	}
+
+	room := models.Room{
+
+		User1ID:  user_model.ID.Hex(),        // sender
+		User2ID:  message_request.ReceiverID, // receiver
+		Messages: make([]models.Message, 0),  // init an empty array of Messages
+	}
+
+	// add to messages the new message of the user
+	room.Messages = append(room.Messages, message)
+
+	return message, room
 }

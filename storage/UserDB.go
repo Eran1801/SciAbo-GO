@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"sci-abo-go/models"
 	"strings"
@@ -85,4 +86,45 @@ func DeleteUser(user_id primitive.ObjectID) error {
 	}
 	return nil
 
+}
+
+
+func AddRoomIdToUser(user *models.User, room_id string) error {
+
+	// start with the sender
+	user.RoomsIDs = append(user.RoomsIDs, room_id)
+	updates := map[string]interface{}{
+		"rooms_id": user.RoomsIDs,
+	}
+	err := UpdateDocDB(os.Getenv("USER_COLLECTION"), user.ID, updates)
+	if err != nil {
+		return fmt.Errorf(err.Error())
+	}
+
+	return nil
+
+}
+
+func FetchUserRooms(rooms_ids []primitive.ObjectID) ([]models.Room, error) {
+
+	collection := GetCollection(os.Getenv("ROOM_COLLECTION"))
+	var rooms []models.Room // init an empty array of Rooms
+
+	// set the filter to be the array of rooms id
+    filter := bson.M{"_id": bson.M{"$in": rooms_ids}} 
+
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cursor.All(context.Background(), &rooms)
+	if err != nil{
+		return nil, err
+	}
+
+	log.Printf("rooms ids %v", rooms)
+
+
+	return rooms, nil
 }

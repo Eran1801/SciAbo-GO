@@ -25,6 +25,8 @@ type User struct {
 	About                        string             `json:"about" bson:"about" validate:"required"`
 	JoinedEventIDs               []string           `json:"joined_event_ids" bson:"joined_event_ids"`
 	CreateTime					 time.Time			`json:"create_time" bson:"create_time"`
+	RoomsIDs 					[]string				`json:"rooms_id" bson:"rooms_id"`
+
 }
 
 // define a custom validator instance

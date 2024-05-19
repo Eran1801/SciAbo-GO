@@ -37,6 +37,11 @@ func InitializerRoutes() *gin.Engine {
 	router.POST("api/profile/update_user_details", middleware.RequiredAuth, requests.UpdateUserDetails)
 	router.DELETE("api/profile/delete_user", middleware.RequiredAuth, requests.DeleteUser)
 
+	// messages
+	router.POST("api/messages/send_first_message", middleware.RequiredAuth, requests.SendFirstMessage)
+	router.POST("api/messages/send_message", middleware.RequiredAuth, requests.SendAndInsertNewMessageToRoom)
+	router.GET("api/messages/get_all_rooms", middleware.RequiredAuth, requests.GetAllRoomsByUserID)
+	router.GET("api/messages/get_all_messages_by_room_id", middleware.RequiredAuth, requests.GetMessagesByRoomID)
 
 	return router
 }

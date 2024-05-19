@@ -20,8 +20,8 @@ func AddEvent(c *gin.Context) {
 		return
 	}
 
-	event.CreateTime = time.Now() 	// time creation of event
-	event.Verified = "0" // new event needs to be approved. in search event it's extract only events with Verified value of "1"
+	event.CreateTime = time.Now() // time creation of event
+	event.Verified = "0"          // new event needs to be approved. in search event it's extract only events with Verified value of "1"
 
 	// initialize empty list of participants before saving
 	event.Participants = make([]string, 0)
@@ -48,7 +48,7 @@ func GetAllUserEvents(c *gin.Context) {
 	var user_events_ids []string = user_model.JoinedEventIDs
 
 	// convert event_ids(string) to ObjectID
-	event_ids := utils.FromStringListToPrimitiveList(user_events_ids)
+	event_ids := utils.StringToPrimitiveList(user_events_ids)
 
 	// fetch all the events(models.Event) that the user is join to
 	events := storage.FetchUserEvents(event_ids)
@@ -73,7 +73,7 @@ func GetAllParticipatesInEvent(c *gin.Context) {
 		return
 	}
 
-	participants_ids_primitive := utils.FromStringListToPrimitiveList(participants_ids.Participants)
+	participants_ids_primitive := utils.StringToPrimitiveList(participants_ids.Participants)
 
 	users, _ := storage.GetUsersByIDs(participants_ids_primitive)
 
@@ -159,8 +159,7 @@ func JoinEvent(c *gin.Context) {
 	SuccessResponse(c, "success", nil)
 }
 
-
-func SearchEvent(c *gin.Context){
+func SearchEvent(c *gin.Context) {
 
 	var filters utils.SearchFilters
 
@@ -171,15 +170,15 @@ func SearchEvent(c *gin.Context){
 		return
 	}
 
-	query := utils.CheckFilters(filters) 
+	query := utils.CheckFilters(filters)
 
 	query["verified"] = "1" // return only approved events by admin
 	filter_events, err := storage.FetchEventByFilters(query)
-	if err != nil { 
+	if err != nil {
 		ErrorResponse(c, err.Error())
 		return
 	}
-	
+
 	SuccessResponse(c, "success", filter_events)
 
 }
@@ -233,6 +232,4 @@ func UploadEventPic(c *gin.Context) {
 
 	SuccessResponse(c, "Event image upload successfully", nil)
 
-
 }
-
