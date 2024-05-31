@@ -40,6 +40,7 @@ func InitializeDB() {
 
 	err = CreatingIndexesDB(user_collection_name, keys, index_options, client)
 	if err != nil {
+		log.Println(err.Error())
 		log.Fatal(err)
 	}
 
@@ -50,6 +51,7 @@ func InitializeDB() {
 
 	err = CreatingIndexesDB(reset_code_collection_name, keys, index_options, client)
 	if err != nil {
+		log.Println(err.Error())
 		log.Fatal(err)
 	}
 
