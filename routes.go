@@ -9,12 +9,12 @@ import (
 )
 
 func InitializerRoutes() *gin.Engine {
-    // Create a Gin router with default middleware (logger and recovery)
+    // create a Gin router with default middleware (logger and recovery)
     router := gin.Default()
 
-    // Configure CORS middleware
+    // configure CORS middleware
     router.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:4200"},
+        AllowOrigins:     []string{"http://localhost:4200", "http://localhost:8080"},
         AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
         AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
         ExposeHeaders:    []string{"Content-Length"},
