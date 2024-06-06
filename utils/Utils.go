@@ -220,6 +220,8 @@ func CheckFilters(filters SearchFilters) primitive.M {
 
 }
 
+/*
+NOT IN USED, MAYBE LATER
 func PopulateMessageAndRoomStruct(message_request FirstMessageRequest, user_model *models.User, receiver_user *models.User) (models.Message, models.Room) {
 	// This function is helper function for creating an instance of Message entity and Room for Sending a message to a user
 	message := models.Message{
@@ -241,3 +243,4 @@ func PopulateMessageAndRoomStruct(message_request FirstMessageRequest, user_mode
 
 	return message, room
 }
+*/

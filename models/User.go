@@ -17,15 +17,18 @@ type User struct {
 	ConfirmPassword              string             `json:"confirm_password" bson:"-" validate:"required,eqfield=Password"`
 	ProfileImageURL              string             `json:"profile_image" bson:"profile_image_url"`
 	LinkedinProfile              string             `json:"linkedin_profile" bson:"linkedin_profile" validate:"url"`
-	Country                      string             `json:"user_country" bson:"user_country" validate:"required"`
-	AcademicInstitutionOrCompany string             `json:"academic_institution_or_company" bson:"academic_institution_or_company" validate:"required"`
-	Role                         string             `json:"role" bson:"role" validate:"required"`
-	PrincipalInvestigator        string             `json:"principal_investigator" bson:"principal_investigator"`
 	Industry                     string             `json:"industry" bson:"industry" validate:"required"`
-	About                        string             `json:"about" bson:"about" validate:"required"`
-	JoinedEventIDs               []string           `json:"joined_event_ids" bson:"joined_event_ids"`
 	CreateTime					 time.Time			`json:"create_time" bson:"create_time"`
-	RoomsIDs 					[]string				`json:"rooms_id" bson:"rooms_id"`
+	JoinedEventIDs               []string           `json:"joined_event_ids" bson:"joined_event_ids"`
+
+
+	// NOT IN USE RIGHT NOW, MAYBE IN THE FUTURE
+	// Country                      string             `json:"user_country" bson:"user_country" validate:"required"`
+	// AcademicInstitutionOrCompany string             `json:"academic_institution_or_company" bson:"academic_institution_or_company" validate:"required"`
+	// Role                         string             `json:"role" bson:"role" validate:"required"`
+	// PrincipalInvestigator        string             `json:"principal_investigator" bson:"principal_investigator"`
+	// About                        string             `json:"about" bson:"about" validate:"required"`
+	// RoomsIDs 					[]string				`json:"rooms_id" bson:"rooms_id"`
 
 }
 

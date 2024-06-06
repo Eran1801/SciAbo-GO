@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"log"
+
 	"os"
 	"sci-abo-go/models"
 	"strings"
@@ -88,7 +88,8 @@ func DeleteUser(user_id primitive.ObjectID) error {
 
 }
 
-
+/*
+NOT IN USE RIGHT NOW, MAYBE LATER
 func AddRoomIdToUser(user *models.User, room_id string) error {
 
 	// start with the sender
@@ -128,3 +129,4 @@ func FetchUserRooms(rooms_ids []primitive.ObjectID) ([]models.Room, error) {
 
 	return rooms, nil
 }
+*/

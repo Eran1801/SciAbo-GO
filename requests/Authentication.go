@@ -35,7 +35,6 @@ func CreateUser(c *gin.Context) {
 	user.Password = utils.EncryptPassword(user.Password)
 
 	user.JoinedEventIDs = make([]string, 0) // init an empty list
-	user.RoomsIDs = make([]string, 0) // empty array
 
 	if err := storage.InsertUserDB(&user); err != nil {
 		ErrorResponse(c, err.Error())
